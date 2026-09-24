@@ -27,11 +27,7 @@ struct GameHUDView: View {
                 }
             }
 
-            HStack(spacing: 8) {
-                Text("❄️")
-                TemperatureBar(value: state.foodTemperature)
-                Text("🔥")
-            }
+            TemperatureBar(value: state.foodTemperature)
 
         }
         .padding(.horizontal, 10)
@@ -55,9 +51,17 @@ private struct TemperatureBar: View {
                         .frame(width: geometry.size.width * value)
                     Spacer(minLength: 0)
                 }
+
+                HStack {
+                    Text("❄️")
+                    Spacer(minLength: 0)
+                    Text("🔥")
+                }
+                .font(.body)
+                .padding(.horizontal, 3)
             }
         }
-        .frame(height: 10)
+        .frame(height: 24)
     }
 
     private var temperatureColor: Color {

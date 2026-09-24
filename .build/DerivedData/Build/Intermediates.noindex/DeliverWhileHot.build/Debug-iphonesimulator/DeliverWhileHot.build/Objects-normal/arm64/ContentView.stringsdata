@@ -1,16 +1,5 @@
 {
   "source": "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/ContentView.swift",
-  "tables": {
-    "Localizable": [
-      {
-        "comment": "",
-        "key": "DRAG LEFT OR RIGHT TO STEER",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 20
-        }
-      }
-    ]
-  },
+  "tables": {},
   "version": 1
 }

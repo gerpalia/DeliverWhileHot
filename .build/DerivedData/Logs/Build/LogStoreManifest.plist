@@ -5,6 +5,49 @@
 	<key>logFormatVersion</key>
 	<integer>12</integer>
 	<key>logs</key>
-	<dict/>
+	<dict>
+		<key>FFA0E85F-57F0-402A-9F23-13857072A00D</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>FFA0E85F-57F0-402A-9F23-13857072A00D.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>DeliverWhileHot project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>DeliverWhileHot</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Building project DeliverWhileHot with scheme DeliverWhileHot and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>811969561.07610095</real>
+			<key>timeStoppedRecording</key>
+			<real>811969566.47732902</real>
+			<key>title</key>
+			<string>Building project DeliverWhileHot with scheme DeliverWhileHot and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>FFA0E85F-57F0-402A-9F23-13857072A00D</string>
+		</dict>
+	</dict>
 </dict>
 </plist>

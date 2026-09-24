@@ -1,6 +1,14 @@
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/EncounterNode.swift
 /Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/GameConstants.swift
 /Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/GameNodeFactory.swift
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/GameRules.swift
 /Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/GameScene.swift
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/GameState.swift
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/HazardDefinition.swift
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/HazardNode.swift
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Game/ProjectileNode.swift
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/UI/EndingView.swift
+/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/UI/GameHUDView.swift
 /Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/ContentView.swift
 /Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/DeliverWhileHotApp.swift
 /Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/DerivedSources/GeneratedAssetSymbols.swift

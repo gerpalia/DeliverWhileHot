@@ -21,6 +21,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var didSpawnOfficer = false
     private var didSpawnThief = false
     private var didSpawnPidgeot = false
+    private var patrolOfficer: EncounterNode?
     private var hazardSpawnTimer: TimeInterval = 0
     private var hazardSpawnIndex = 0
     private(set) var gameState = GameState()
@@ -72,6 +73,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         elapsedStageTime += deltaTime
         updateWorldHazards(deltaTime: deltaTime)
+        updatePatrolOfficer(deltaTime: deltaTime)
         updateEncounters(deltaTime: deltaTime)
 
         worldNode.position.y -= GameConstants.automaticScrollSpeed * deltaTime
@@ -135,6 +137,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             if isOverlapping {
                 handleObstacleContact(at: time)
                 break
+            }
+        }
+
+        if let officer = patrolOfficer {
+            let officerCenter = CGPoint(x: officer.position.x + worldNode.position.x,
+                                        y: officer.position.y + worldNode.position.y)
+            let horizontalDistance = abs(playerCenter.x - officerCenter.x)
+            let verticalDistance = abs(playerCenter.y - officerCenter.y)
+            let isOverlapping = horizontalDistance <= playerHalfWidth + 31 &&
+                verticalDistance <= playerHalfHeight + 38
+
+            if isOverlapping {
+                handleOfficerInteraction(at: time)
             }
         }
 
@@ -238,32 +253,18 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func updateEncounters(deltaTime: TimeInterval) {
-        if !didSpawnOfficer, elapsedStageTime >= GameConstants.officerSpawnTime {
-            didSpawnOfficer = true
-            let officerHalfWidth: CGFloat = 31
-            let minimumX = size.width / 2 - routeWidth / 2 + officerHalfWidth
-            let maximumX = size.width / 2 + routeWidth / 2 - officerHalfWidth
-            let randomX = CGFloat.random(in: minimumX...maximumX)
-            let officer = EncounterNode(kind: .patrolOfficer,
-                                        position: CGPoint(x: randomX,
-                                                          y: player.position.y + 60))
-            encounterNodeLayer.addChild(officer)
-        }
-
         if !didSpawnThief, elapsedStageTime >= GameConstants.thiefSpawnTime {
             didSpawnThief = true
             let thief = EncounterNode(kind: .thief,
                                       position: CGPoint(x: size.width / 2 + routeWidth * 0.24,
-                                                        y: player.position.y + 150))
+                                                        y: size.height - GameConstants.topTouchExclusionHeight - 50))
             encounterNodeLayer.addChild(thief)
         }
 
         if !didSpawnPidgeot, elapsedStageTime >= GameConstants.pidgeotSpawnTime {
             didSpawnPidgeot = true
             let direction: CGFloat = Bool.random() ? 1 : -1
-            let startX = direction > 0
-                ? size.width / 2 - routeWidth / 2 - 70
-                : size.width / 2 + routeWidth / 2 + 70
+            let startX = direction > 0 ? -70 : size.width + 70
             let pidgeot = EncounterNode(kind: .pidgeot,
                                         position: CGPoint(x: startX,
                                                           y: size.height - GameConstants.topTouchExclusionHeight - 50),
@@ -296,6 +297,32 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             if projectile.position.y < -40 {
                 projectile.removeFromParent()
             }
+        }
+    }
+
+    private func updatePatrolOfficer(deltaTime: TimeInterval) {
+        if !didSpawnOfficer, elapsedStageTime >= GameConstants.officerSpawnTime {
+            didSpawnOfficer = true
+            let officerHalfWidth: CGFloat = 31
+            let minimumX = size.width / 2 - routeWidth / 2 + officerHalfWidth
+            let maximumX = size.width / 2 + routeWidth / 2 - officerHalfWidth
+            let randomX = CGFloat.random(in: minimumX...maximumX)
+            let spawnY = size.height - GameConstants.topTouchExclusionHeight + 90 - worldNode.position.y
+            let officer = EncounterNode(kind: .patrolOfficer,
+                                        position: CGPoint(x: randomX, y: spawnY))
+            patrolOfficer = officer
+            worldNode.addChild(officer)
+        }
+
+        guard let officer = patrolOfficer else { return }
+        officer.update(deltaTime: deltaTime,
+                       targetX: player.position.x,
+                       targetY: player.position.y,
+                       routeWidth: routeWidth,
+                       sceneWidth: size.width)
+        if officer.hasExpired {
+            officer.removeFromParent()
+            patrolOfficer = nil
         }
     }
 

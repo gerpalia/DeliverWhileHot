@@ -19,6 +19,7 @@ final class EncounterNode: SKNode {
     private var elapsedTime: TimeInterval = 0
     private var projectileTimer: TimeInterval = 0
     private(set) var projectilesThrown = 0
+    private var reachedScreenEdge = false
 
     init(kind: EncounterKind, position: CGPoint, horizontalDirection: CGFloat = 1) {
         self.kind = kind
@@ -54,7 +55,6 @@ final class EncounterNode: SKNode {
         switch kind {
         case .patrolOfficer:
             position.x = fixedX
-            position.y = targetY + 60
         case .thief:
             position.x = fixedX
         case .pidgeot:
@@ -62,14 +62,19 @@ final class EncounterNode: SKNode {
             position.y += GameConstants.pidgeotVerticalSpeed * CGFloat(deltaTime)
         }
 
-        let halfWidth = visualNode.frame.width / 2
-        let minimumX = sceneWidth / 2 - routeWidth / 2 + halfWidth
-        let maximumX = sceneWidth / 2 + routeWidth / 2 - halfWidth
-        position.x = min(max(position.x, minimumX), maximumX)
+        if case .pidgeot = kind {
+            let margin = visualNode.frame.width / 2
+            reachedScreenEdge = position.x < -margin || position.x > sceneWidth + margin
+        } else {
+            let halfWidth = visualNode.frame.width / 2
+            let minimumX = sceneWidth / 2 - routeWidth / 2 + halfWidth
+            let maximumX = sceneWidth / 2 + routeWidth / 2 - halfWidth
+            position.x = min(max(position.x, minimumX), maximumX)
+        }
     }
 
     var hasExpired: Bool {
-        return elapsedTime >= duration
+        return elapsedTime >= duration || reachedScreenEdge
     }
 
     var projectileEffect: ProjectileEffect? {

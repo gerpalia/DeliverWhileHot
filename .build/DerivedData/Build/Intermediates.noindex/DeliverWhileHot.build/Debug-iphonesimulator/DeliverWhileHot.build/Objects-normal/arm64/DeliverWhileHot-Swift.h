@@ -304,10 +304,17 @@ typedef unsigned int swift_uint4  __attribute__((__ext_vector_type__(4)));
 
 #if defined(__OBJC__)
 
+@class NSCoder;
+SWIFT_CLASS("_TtC15DeliverWhileHot13EncounterNode")
+@interface EncounterNode : SKNode
+- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)aDecoder OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)init SWIFT_UNAVAILABLE;
++ (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
+@end
+
 @class UITouch;
 @class UIEvent;
 @class SKPhysicsContact;
-@class NSCoder;
 SWIFT_CLASS("_TtC15DeliverWhileHot9GameScene")
 @interface GameScene : SKScene <SKPhysicsContactDelegate>
 - (void)update:(NSTimeInterval)currentTime;
@@ -317,6 +324,20 @@ SWIFT_CLASS("_TtC15DeliverWhileHot9GameScene")
 - (nonnull instancetype)initWithSize:(CGSize)size OBJC_DESIGNATED_INITIALIZER;
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;
 - (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)aDecoder OBJC_DESIGNATED_INITIALIZER;
+@end
+
+SWIFT_CLASS("_TtC15DeliverWhileHot10HazardNode")
+@interface HazardNode : SKNode
+- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)aDecoder OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)init SWIFT_UNAVAILABLE;
++ (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
+@end
+
+SWIFT_CLASS("_TtC15DeliverWhileHot14ProjectileNode")
+@interface ProjectileNode : SKNode
+- (nullable instancetype)initWithCoder:(NSCoder * _Nonnull)aDecoder OBJC_DESIGNATED_INITIALIZER;
+- (nonnull instancetype)init SWIFT_UNAVAILABLE;
++ (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
 @end
 
 #endif
