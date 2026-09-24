@@ -1,0 +1,39 @@
+//
+//  GameRules.swift
+//  DeliverWhileHot
+//
+
+struct GameRules {
+    static let temperatureLossPerSecond = 0.035
+    static let damagePerObstacleContact = 1
+    static let foodCostPerMeal = 0.25
+    static let healthRestoredPerMeal = 1
+    static let minimumTemperatureForDelivery = 0.20
+    static let minimumFoodForDelivery = 0.25
+
+    static func advanceTemperature(_ state: inout GameState, by seconds: Double) {
+        state.foodTemperature = max(0, state.foodTemperature - temperatureLossPerSecond * seconds)
+    }
+
+    static func applyObstacleDamage(_ state: inout GameState) {
+        state.health = max(0, state.health - damagePerObstacleContact)
+    }
+
+    @discardableResult
+    static func consumeFood(_ state: inout GameState) -> Bool {
+        guard state.health < GameState.maximumHealth,
+              state.foodRemaining >= foodCostPerMeal else { return false }
+
+        state.health = min(GameState.maximumHealth,
+                           state.health + healthRestoredPerMeal)
+        state.foodRemaining = max(0, state.foodRemaining - foodCostPerMeal)
+        return true
+    }
+
+    static func deliveryResult(for state: GameState) -> GameEndReason {
+        if state.health <= 0 { return .healthDepleted }
+        if state.foodTemperature < minimumTemperatureForDelivery { return .foodTooCold }
+        if state.foodRemaining < minimumFoodForDelivery { return .insufficientFood }
+        return .delivered
+    }
+}

@@ -16,10 +16,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastCollisionTime: TimeInterval = -.infinity
     private var hasReachedDestination = false
     private var isConfigured = false
+    private(set) var gameState = GameState()
+    private var onStateChanged: ((GameState) -> Void)?
+    private var onFinished: ((GameEndReason) -> Void)?
 
-    func configure(for viewSize: CGSize) {
+    func configure(for viewSize: CGSize,
+                   onStateChanged: ((GameState) -> Void)? = nil,
+                   onFinished: ((GameEndReason) -> Void)? = nil) {
         guard !isConfigured, viewSize.width > 0, viewSize.height > 0 else { return }
         isConfigured = true
+        self.onStateChanged = onStateChanged
+        self.onFinished = onFinished
 
         routeHeight = max(viewSize.height * GameConstants.routeHeightMultiplier,
                           GameConstants.minimumRouteHeight)
@@ -42,12 +49,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         player.position = CGPoint(x: size.width / 2, y: viewSize.height * 0.22)
         targetX = player.position.x
         addChild(player)
+        publishState()
     }
 
     override func update(_ currentTime: TimeInterval) {
-        guard isConfigured, !hasReachedDestination else { return }
+        guard isConfigured, !hasReachedDestination, case .playing = gameState.phase else { return }
         let deltaTime = min(currentTime - (lastUpdateTime ?? currentTime), 1.0 / 20.0)
         lastUpdateTime = currentTime
+
+        GameRules.advanceTemperature(&gameState, by: deltaTime)
+        if gameState.foodTemperature <= 0 {
+            finish(with: .foodTooCold)
+            return
+        }
 
         worldNode.position.y -= GameConstants.automaticScrollSpeed * deltaTime
         if worldNode.position.y <= -routeHeight {
@@ -61,14 +75,24 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                                 size.width / 2 + halfRoad)
 
         checkSceneInteractions(at: currentTime)
+        publishState()
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        updateTarget(with: touches.first)
+        guard let touch = touches.first, acceptsGameplayTouch(touch) else { return }
+        updateTarget(with: touch)
     }
 
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        updateTarget(with: touches.first)
+        guard let touch = touches.first, acceptsGameplayTouch(touch) else { return }
+        updateTarget(with: touch)
+    }
+
+    private func acceptsGameplayTouch(_ touch: UITouch) -> Bool {
+        let location = touch.location(in: self)
+        let isInTopExcludedArea = location.y >= size.height - GameConstants.topTouchExclusionHeight
+        let isInBottomExcludedArea = location.y <= GameConstants.bottomTouchExclusionHeight
+        return !isInTopExcludedArea && !isInBottomExcludedArea
     }
 
     private func updateTarget(with touch: UITouch?) {
@@ -103,9 +127,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             abs(playerCenter.y - destinationCenter.y) <= playerHalfHeight + destinationHalfHeight
 
         if reachedDestination {
-            hasReachedDestination = true
-            worldNode.removeAllActions()
-            player.removeAllActions()
+            finish(with: GameRules.deliveryResult(for: gameState))
         }
     }
 
@@ -120,6 +142,32 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             .run { [weak self] in self?.player.fillColor = GameConstants.playerColor }
         ])
         player.run(feedback, withKey: "collisionFeedback")
+        GameRules.applyObstacleDamage(&gameState)
+        if gameState.health <= 0 {
+            finish(with: .healthDepleted)
+        }
+        publishState()
+    }
+
+    func consumeFood() {
+        guard case .playing = gameState.phase else { return }
+        if GameRules.consumeFood(&gameState) {
+            publishState()
+        }
+    }
+
+    private func finish(with reason: GameEndReason) {
+        guard case .playing = gameState.phase else { return }
+        gameState.phase = .ended(reason)
+        hasReachedDestination = true
+        worldNode.removeAllActions()
+        player.removeAllActions()
+        publishState()
+        onFinished?(reason)
+    }
+
+    private func publishState() {
+        onStateChanged?(gameState)
     }
 
     func didBegin(_ contact: SKPhysicsContact) {

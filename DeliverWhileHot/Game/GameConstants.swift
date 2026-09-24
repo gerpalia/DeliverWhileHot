@@ -19,6 +19,8 @@ enum GameConstants {
     static let playerStartHeight: CGFloat = 120
     static let movementSmoothing: CGFloat = 0.16
     static let automaticScrollSpeed: CGFloat = 120
+    static let topTouchExclusionHeight: CGFloat = 150
+    static let bottomTouchExclusionHeight: CGFloat = 100
     static let collisionFeedbackDuration: TimeInterval = 0.18
     static let collisionCooldown: TimeInterval = 0.75
 

@@ -7,24 +7,48 @@ import SpriteKit
 import SwiftUI
 
 struct ContentView: View {
-    private let scene = GameScene()
+    @State private var scene = GameScene()
+    @State private var gameState = GameState()
+    @State private var endReason: GameEndReason?
+    @State private var sceneID = UUID()
 
     var body: some View {
         GeometryReader { geometry in
-            SpriteView(scene: scene, options: [.ignoresSiblingOrder])
-                .ignoresSafeArea()
-                .onAppear {
-                    scene.configure(for: geometry.size)
+            ZStack {
+                SpriteView(scene: scene, options: [.ignoresSiblingOrder])
+                    .ignoresSafeArea()
+                    .id(sceneID)
+
+                VStack {
+                    GameHUDView(state: gameState) {
+                        scene.consumeFood()
+                    }
+                    Spacer()
                 }
-                .overlay(alignment: .top) {
-                    Text("DRAG LEFT OR RIGHT TO STEER")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(.black.opacity(0.55), in: Capsule())
-                        .padding(.top, 18)
+
+                if let endReason {
+                    EndingView(reason: endReason) {
+                        startGame(in: geometry.size)
+                    }
                 }
+            }
+            .onAppear {
+                startGame(in: geometry.size)
+            }
         }
+    }
+
+    private func startGame(in size: CGSize) {
+        gameState = GameState()
+        endReason = nil
+        scene = GameScene()
+        sceneID = UUID()
+        scene.configure(for: size,
+                        onStateChanged: { state in
+                            gameState = state
+                        },
+                        onFinished: { reason in
+                            endReason = reason
+                        })
     }
 }
