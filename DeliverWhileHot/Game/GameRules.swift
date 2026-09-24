@@ -7,6 +7,8 @@ struct GameRules {
     static let temperatureLossPerSecond = 0.035
     static let damagePerObstacleContact = 1
     static let foodCostPerMeal = 0.25
+    static let bribeFoodCost = 0.25
+    static let pidgeotFoodLoss = 0.20
     static let healthRestoredPerMeal = 1
     static let minimumTemperatureForDelivery = 0.20
     static let minimumFoodForDelivery = 0.25
@@ -17,6 +19,17 @@ struct GameRules {
 
     static func applyObstacleDamage(_ state: inout GameState) {
         state.health = max(0, state.health - damagePerObstacleContact)
+    }
+
+    @discardableResult
+    static func payOfficerBribe(_ state: inout GameState) -> Bool {
+        guard state.foodRemaining >= bribeFoodCost else { return false }
+        state.foodRemaining = max(0, state.foodRemaining - bribeFoodCost)
+        return true
+    }
+
+    static func applyPidgeotMess(_ state: inout GameState) {
+        state.foodRemaining = max(0, state.foodRemaining - pidgeotFoodLoss)
     }
 
     @discardableResult

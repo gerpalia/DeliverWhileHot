@@ -7,23 +7,24 @@ import SwiftUI
 
 struct GameHUDView: View {
     let state: GameState
-    let onEatFood: () -> Void
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 4) {
             HStack {
                 Text(String(repeating: "♥ ", count: state.health).trimmingCharacters(in: .whitespaces))
                     .foregroundStyle(.red)
-                    .font(.title3.weight(.bold))
+                    .font(.headline.weight(.bold))
 
                 Spacer()
 
-                Button("EAT 🍕", action: onEatFood)
-                    .font(.caption.weight(.bold))
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
-                    .disabled(state.health >= GameState.maximumHealth ||
-                              state.foodRemaining < GameRules.foodCostPerMeal)
+                HStack(spacing: 3) {
+                    ForEach(0..<4, id: \.self) { index in
+                        let isAvailable = state.foodRemaining >= Double(index + 1) / 4
+                        Text("🍕")
+                            .opacity(isAvailable ? 1 : 0.18)
+                            .blur(radius: isAvailable ? 0 : 2)
+                    }
+                }
             }
 
             HStack(spacing: 8) {
@@ -32,19 +33,10 @@ struct GameHUDView: View {
                 Text("🔥")
             }
 
-            HStack(spacing: 4) {
-                Text("ORDER")
-                    .font(.caption2.weight(.bold))
-                    .foregroundStyle(.white.opacity(0.85))
-                ForEach(0..<4, id: \.self) { index in
-                    Text("🍕")
-                        .opacity(state.foodRemaining >= Double(index + 1) / 4 ? 1 : 0.22)
-                }
-            }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 18)
-        .padding(.bottom, 10)
+        .padding(.horizontal, 10)
+        .padding(.top, 5)
+        .padding(.bottom, 6)
         .background(.black.opacity(0.55))
         .foregroundStyle(.white)
     }

@@ -20,9 +20,7 @@ struct ContentView: View {
                     .id(sceneID)
 
                 VStack {
-                    GameHUDView(state: gameState) {
-                        scene.consumeFood()
-                    }
+                    GameHUDView(state: gameState)
                     Spacer()
                 }
 

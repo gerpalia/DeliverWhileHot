@@ -52,26 +52,8 @@ struct GameNodeFactory {
         return player
     }
 
-    func makeObstacles(width: CGFloat, routeWidth: CGFloat, height: CGFloat) -> [SKShapeNode] {
-        let placements: [(CGFloat, CGFloat)] = [(0.28, -0.20), (0.48, 0.18), (0.68, -0.10)]
-        return placements.map { heightFraction, horizontalOffset in
-            let obstacle = SKShapeNode(circleOfRadius: GameConstants.obstacleRadius)
-            obstacle.name = "obstacle"
-            obstacle.fillColor = GameConstants.obstacleColor
-            obstacle.strokeColor = .black
-            obstacle.lineWidth = 4
-            obstacle.position = CGPoint(x: width / 2 + routeWidth * horizontalOffset,
-                                        y: height * heightFraction)
-
-            let body = SKPhysicsBody(circleOfRadius: GameConstants.obstacleRadius)
-            body.categoryBitMask = GameConstants.obstaclePhysicsCategory
-            body.collisionBitMask = 0
-            body.contactTestBitMask = GameConstants.playerPhysicsCategory
-            body.affectedByGravity = false
-            body.isDynamic = false
-            obstacle.physicsBody = body
-            return obstacle
-        }
+    func makeHazard(definition: HazardDefinition, position: CGPoint) -> HazardNode {
+        HazardNode(definition: definition, position: position)
     }
 
     func makeDestination(width: CGFloat, routeWidth: CGFloat, height: CGFloat) -> SKShapeNode {

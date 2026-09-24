@@ -9,8 +9,8 @@ enum GameConstants {
     static let playerPhysicsCategory: UInt32 = 1 << 0
     static let obstaclePhysicsCategory: UInt32 = 1 << 1
 
-    static let routeHeightMultiplier: CGFloat = 3.2
-    static let minimumRouteHeight: CGFloat = 1_800
+    static let routeHeightMultiplier: CGFloat = 8.0
+    static let minimumRouteHeight: CGFloat = 4_200
     static let routeWidthRatio: CGFloat = 0.82
     static let maximumRouteWidth: CGFloat = 420
 
@@ -18,11 +18,23 @@ enum GameConstants {
     static let playerCornerRadius: CGFloat = 10
     static let playerStartHeight: CGFloat = 120
     static let movementSmoothing: CGFloat = 0.16
-    static let automaticScrollSpeed: CGFloat = 120
+    static let automaticScrollSpeed: CGFloat = 180
     static let topTouchExclusionHeight: CGFloat = 150
     static let bottomTouchExclusionHeight: CGFloat = 100
     static let collisionFeedbackDuration: TimeInterval = 0.18
     static let collisionCooldown: TimeInterval = 0.75
+    static let officerSpawnTime: TimeInterval = 5
+    static let officerDuration: TimeInterval = 5
+    static let thiefSpawnTime: TimeInterval = 14
+    static let thiefDuration: TimeInterval = 4
+    static let pidgeotSpawnTime: TimeInterval = 22
+    static let pidgeotDuration: TimeInterval = 5.2
+    static let projectileSpeed: CGFloat = 280
+    static let projectileInterval: TimeInterval = 1.1
+    static let pidgeotSpeed: CGFloat = 170
+    static let pidgeotVerticalSpeed: CGFloat = 8
+    static let pidgeotProjectileInterval: TimeInterval = 0.55
+    static let hazardSpawnInterval: TimeInterval = 1.8
 
     static let obstacleRadius: CGFloat = 28
     static let destinationHeight: CGFloat = 96
