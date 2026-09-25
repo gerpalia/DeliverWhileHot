@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>about.description</key>
+	<string>Um jogo arcade caótico de entrega de comida. Mais perigos, comandos e efeitos visuais chegarão nas próximas etapas.</string>
+	<key>about.title</key>
+	<string>Deliver While Hot</string>
+	<key>about.version</key>
+	<string>Versão 1.0</string>
+	<key>common.done</key>
+	<string>Pronto</string>
+	<key>common.restart</key>
+	<string>RECOMEÇAR</string>
+	<key>controls.block</key>
+	<string>BLOQUEAR</string>
+	<key>controls.eat</key>
+	<string>COMER</string>
+	<key>controls.item</key>
+	<string>ITEM</string>
+	<key>controls.molotov</key>
+	<string>MOLOTOV</string>
+	<key>ending.delivered.message</key>
+	<string>Você chegou com um pedido aceitável.</string>
+	<key>ending.delivered.title</key>
+	<string>ENTREGA CONCLUÍDA</string>
+	<key>ending.food_too_cold.message</key>
+	<string>O pedido perdeu calor demais durante o caminho.</string>
+	<key>ending.food_too_cold.title</key>
+	<string>FRIO DEMAIS</string>
+	<key>ending.health_depleted.message</key>
+	<string>O bairro venceu desta vez.</string>
+	<key>ending.health_depleted.title</key>
+	<string>ENTREGADOR DERROTADO</string>
+	<key>ending.insufficient_food.message</key>
+	<string>Você comeu comida demais do pedido.</string>
+	<key>ending.insufficient_food.title</key>
+	<string>PEDIDO PEQUENO DEMAIS</string>
+	<key>how_to_play.movement</key>
+	<string>Mova-se com os controles direcionais, evite perigos, proteja o pedido e chegue ao destino antes que ele esfrie.</string>
+	<key>how_to_play.objective</key>
+	<string>O protótipo já oferece movimento horizontal e vertical, colisões, saúde, qualidade da comida e um temporizador de temperatura.</string>
+	<key>menu.about</key>
+	<string>SOBRE</string>
+	<key>menu.how_to_play</key>
+	<string>COMO JOGAR</string>
+	<key>menu.new_game</key>
+	<string>NOVO JOGO</string>
+</dict>
+</plist>

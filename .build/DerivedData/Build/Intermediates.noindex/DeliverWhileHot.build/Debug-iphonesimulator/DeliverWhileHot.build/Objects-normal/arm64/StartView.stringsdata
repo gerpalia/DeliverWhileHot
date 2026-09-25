@@ -1,0 +1,16 @@
+{
+  "source": "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/StartView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Start game at the beginning",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 40
+        }
+      }
+    ]
+  },
+  "version": 1
+}

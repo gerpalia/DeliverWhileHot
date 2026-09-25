@@ -126,6 +126,16 @@
     "swift-dependencies" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/ProjectileNode.swiftdeps",
     "swiftmodule" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/ProjectileNode~partial.swiftmodule"
   },
+  "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/StartView.swift" : {
+    "const-values" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView.swiftconstvalues",
+    "dependencies" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView.d",
+    "diagnostics" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView.dia",
+    "index-unit-output-path" : "/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView.o",
+    "llvm-bc" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView.bc",
+    "object" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView.o",
+    "swift-dependencies" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView.swiftdeps",
+    "swiftmodule" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/StartView~partial.swiftmodule"
+  },
   "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/UI/EndingView.swift" : {
     "const-values" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/EndingView.swiftconstvalues",
     "dependencies" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/EndingView.d",
@@ -135,6 +145,16 @@
     "object" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/EndingView.o",
     "swift-dependencies" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/EndingView.swiftdeps",
     "swiftmodule" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/EndingView~partial.swiftmodule"
+  },
+  "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/UI/GameControlsView.swift" : {
+    "const-values" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView.swiftconstvalues",
+    "dependencies" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView.d",
+    "diagnostics" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView.dia",
+    "index-unit-output-path" : "/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView.o",
+    "llvm-bc" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView.bc",
+    "object" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView.o",
+    "swift-dependencies" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView.swiftdeps",
+    "swiftmodule" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameControlsView~partial.swiftmodule"
   },
   "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/UI/GameHUDView.swift" : {
     "const-values" : "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/.build/DerivedData/Build/Intermediates.noindex/DeliverWhileHot.build/Debug-iphonesimulator/DeliverWhileHot.build/Objects-normal/x86_64/GameHUDView.swiftconstvalues",

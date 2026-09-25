@@ -22,6 +22,16 @@ struct ContentView: View {
                 VStack {
                     GameHUDView(state: gameState)
                     Spacer()
+                    if endReason == nil {
+                        GameControlsView(
+                            canEat: gameState.health < GameState.maximumHealth &&
+                                gameState.foodRemaining >= GameRules.foodCostPerMeal,
+                            onMove: { vector in
+                                scene.setPlayerInput(horizontal: vector.dx, vertical: vector.dy)
+                            },
+                            onEat: { scene.consumeFood() }
+                        )
+                    }
                 }
 
                 if let endReason {

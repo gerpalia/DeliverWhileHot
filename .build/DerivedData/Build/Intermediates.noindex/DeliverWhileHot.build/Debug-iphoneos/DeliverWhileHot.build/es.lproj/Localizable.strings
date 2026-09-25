@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>about.description</key>
+	<string>Un juego arcade caótico de reparto de comida. Más peligros, comandos y efectos visuales llegarán en futuras etapas.</string>
+	<key>about.title</key>
+	<string>Deliver While Hot</string>
+	<key>about.version</key>
+	<string>Versión 1.0</string>
+	<key>common.done</key>
+	<string>Listo</string>
+	<key>common.restart</key>
+	<string>REINICIAR</string>
+	<key>controls.block</key>
+	<string>BLOQUEAR</string>
+	<key>controls.eat</key>
+	<string>COMER</string>
+	<key>controls.item</key>
+	<string>OBJETO</string>
+	<key>controls.molotov</key>
+	<string>CÓCTEL</string>
+	<key>ending.delivered.message</key>
+	<string>Llegaste con un pedido aceptable.</string>
+	<key>ending.delivered.title</key>
+	<string>ENTREGA COMPLETA</string>
+	<key>ending.food_too_cold.message</key>
+	<string>El pedido perdió demasiado calor durante el camino.</string>
+	<key>ending.food_too_cold.title</key>
+	<string>DEMASIADO FRÍO</string>
+	<key>ending.health_depleted.message</key>
+	<string>El barrio ganó esta ronda.</string>
+	<key>ending.health_depleted.title</key>
+	<string>REPARTIDOR CAÍDO</string>
+	<key>ending.insufficient_food.message</key>
+	<string>Comiste demasiado del pedido.</string>
+	<key>ending.insufficient_food.title</key>
+	<string>PEDIDO DEMASIADO PEQUEÑO</string>
+	<key>how_to_play.movement</key>
+	<string>Muévete con los controles direccionales, evita los peligros, protege el pedido y llega al destino antes de que se enfríe.</string>
+	<key>how_to_play.objective</key>
+	<string>El prototipo permite movimiento horizontal y vertical, colisiones, salud, calidad de la comida y un temporizador de temperatura.</string>
+	<key>menu.about</key>
+	<string>ACERCA DE</string>
+	<key>menu.how_to_play</key>
+	<string>CÓMO JUGAR</string>
+	<key>menu.new_game</key>
+	<string>NUEVA PARTIDA</string>
+</dict>
+</plist>

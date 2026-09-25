@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>about.description</key>
+	<string>A chaotic food-delivery arcade game. More hazards, commands, and visual effects will arrive in later milestones.</string>
+	<key>about.title</key>
+	<string>Deliver While Hot</string>
+	<key>about.version</key>
+	<string>Version 1.0</string>
+	<key>common.done</key>
+	<string>Done</string>
+	<key>common.restart</key>
+	<string>RESTART</string>
+	<key>controls.block</key>
+	<string>BLOCK</string>
+	<key>controls.eat</key>
+	<string>EAT</string>
+	<key>controls.item</key>
+	<string>ITEM</string>
+	<key>controls.molotov</key>
+	<string>MOLOTOV</string>
+	<key>ending.delivered.message</key>
+	<string>You made it with an acceptable order.</string>
+	<key>ending.delivered.title</key>
+	<string>DELIVERY COMPLETE</string>
+	<key>ending.food_too_cold.message</key>
+	<string>The order lost too much heat on the way.</string>
+	<key>ending.food_too_cold.title</key>
+	<string>TOO COLD</string>
+	<key>ending.health_depleted.message</key>
+	<string>The neighborhood won this round.</string>
+	<key>ending.health_depleted.title</key>
+	<string>RIDER DOWN</string>
+	<key>ending.insufficient_food.message</key>
+	<string>You ate too much of the delivery.</string>
+	<key>ending.insufficient_food.title</key>
+	<string>ORDER TOO SMALL</string>
+	<key>how_to_play.movement</key>
+	<string>Move with the directional controls, avoid hazards, protect the order, and reach the destination before it gets cold.</string>
+	<key>how_to_play.objective</key>
+	<string>The prototype currently supports horizontal and vertical movement, collisions, health, food quality, and the temperature timer.</string>
+	<key>menu.about</key>
+	<string>ABOUT</string>
+	<key>menu.how_to_play</key>
+	<string>HOW TO PLAY</string>
+	<key>menu.new_game</key>
+	<string>NEW GAME</string>
+</dict>
+</plist>

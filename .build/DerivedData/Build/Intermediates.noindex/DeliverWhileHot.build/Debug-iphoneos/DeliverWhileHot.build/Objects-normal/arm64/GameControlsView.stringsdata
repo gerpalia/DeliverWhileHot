@@ -1,0 +1,56 @@
+{
+  "source": "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/UI/GameControlsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "controls.eat",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 21
+        }
+      },
+      {
+        "comment": "",
+        "key": "controls.block",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 22
+        }
+      },
+      {
+        "comment": "",
+        "key": "controls.molotov",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "controls.item",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "Virtual joystick",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 77
+        }
+      },
+      {
+        "comment": "",
+        "key": "Drag in any direction to move",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 78
+        }
+      }
+    ]
+  },
+  "version": 1
+}

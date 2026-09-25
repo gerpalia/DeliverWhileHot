@@ -56,6 +56,10 @@ struct GameNodeFactory {
         HazardNode(definition: definition, position: position)
     }
 
+    func makeBonus(kind: BonusKind, position: CGPoint) -> BonusNode {
+        BonusNode(kind: kind, position: position)
+    }
+
     func makeDestination(width: CGFloat, routeWidth: CGFloat, height: CGFloat) -> SKShapeNode {
         let destination = SKShapeNode(rectOf: CGSize(width: routeWidth - 36,
                                                        height: GameConstants.destinationHeight),

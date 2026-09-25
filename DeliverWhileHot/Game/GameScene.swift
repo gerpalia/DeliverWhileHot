@@ -10,7 +10,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private let worldNode = SKNode()
     private let encounterNodeLayer = SKNode()
     private var player = SKShapeNode()
-    private var targetX: CGFloat = 0
+    private var horizontalInput: CGFloat = 0
+    private var verticalInput: CGFloat = 0
     private var routeWidth: CGFloat = 0
     private var routeHeight: CGFloat = 0
     private var lastUpdateTime: TimeInterval?
@@ -36,8 +37,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         self.onStateChanged = onStateChanged
         self.onFinished = onFinished
 
-        routeHeight = max(viewSize.height * GameConstants.routeHeightMultiplier,
-                          GameConstants.minimumRouteHeight)
+        let playerStartY = viewSize.height * 0.22
+        let collisionPadding = GameConstants.playerSize.height / 2 +
+            GameConstants.destinationHeight / 2
+        let targetTravelDistance = GameConstants.automaticScrollSpeed *
+            CGFloat(GameConstants.targetStageDuration)
+        let targetRouteHeight = targetTravelDistance +
+            GameConstants.destinationTopInset +
+            playerStartY +
+            collisionPadding
+        routeHeight = max(targetRouteHeight, GameConstants.minimumRouteHeight)
         size = viewSize
         scaleMode = .aspectFill
         backgroundColor = GameConstants.routeColor
@@ -52,10 +61,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         nodeFactory.makeLaneMarkers(width: size.width, height: routeHeight).forEach(worldNode.addChild)
         nodeFactory.makeBoundaries(width: size.width, routeWidth: routeWidth, height: routeHeight).forEach(worldNode.addChild)
         worldNode.addChild(nodeFactory.makeDestination(width: size.width, routeWidth: routeWidth, height: routeHeight))
+        worldNode.addChild(nodeFactory.makeBonus(
+            kind: .food,
+            position: CGPoint(x: size.width / 2 - routeWidth * 0.18,
+                              y: routeHeight * 0.36)
+        ))
+        worldNode.addChild(nodeFactory.makeBonus(
+            kind: .fire,
+            position: CGPoint(x: size.width / 2 + routeWidth * 0.18,
+                              y: routeHeight * 0.58)
+        ))
 
         player = nodeFactory.makePlayer()
         player.position = CGPoint(x: size.width / 2, y: viewSize.height * 0.22)
-        targetX = player.position.x
         addChild(player)
         publishState()
     }
@@ -78,7 +96,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         worldNode.position.y -= GameConstants.automaticScrollSpeed * deltaTime
         if worldNode.position.y <= -routeHeight {
-            worldNode.position.y += routeHeight
+            finish(with: GameRules.deliveryResult(for: gameState))
+            return
         }
 
         for hazard in worldNode.children.compactMap({ $0 as? HazardNode }) {
@@ -87,36 +106,43 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                                   sceneWidth: size.width)
         }
 
-        player.position.x += (targetX - player.position.x) * GameConstants.movementSmoothing
+        player.position.x += horizontalInput * GameConstants.playerMovementSpeed * CGFloat(deltaTime)
+        player.position.y += verticalInput * GameConstants.playerVerticalMovementSpeed * CGFloat(deltaTime)
 
         let halfRoad = routeWidth / 2 - player.frame.width / 2 - 8
         player.position.x = min(max(player.position.x, size.width / 2 - halfRoad),
                                 size.width / 2 + halfRoad)
 
+        let minimumPlayerY = GameConstants.bottomTouchExclusionHeight + player.frame.height / 2 + 12
+        let maximumPlayerY = size.height - GameConstants.topTouchExclusionHeight - player.frame.height / 2 - 12
+        player.position.y = min(max(player.position.y, minimumPlayerY), maximumPlayerY)
+
         checkSceneInteractions(at: currentTime)
         publishState()
     }
 
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, acceptsGameplayTouch(touch) else { return }
-        updateTarget(with: touch)
+    func movePlayer(direction: CGFloat) {
+        guard case .playing = gameState.phase else { return }
+        horizontalInput = direction
     }
 
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first, acceptsGameplayTouch(touch) else { return }
-        updateTarget(with: touch)
+    func setPlayerInput(horizontal: CGFloat, vertical: CGFloat) {
+        guard case .playing = gameState.phase else { return }
+        horizontalInput = max(-1, min(1, horizontal))
+        verticalInput = max(-1, min(1, vertical))
     }
 
-    private func acceptsGameplayTouch(_ touch: UITouch) -> Bool {
-        let location = touch.location(in: self)
-        let isInTopExcludedArea = location.y >= size.height - GameConstants.topTouchExclusionHeight
-        let isInBottomExcludedArea = location.y <= GameConstants.bottomTouchExclusionHeight
-        return !isInTopExcludedArea && !isInBottomExcludedArea
+    func stopPlayerMovement() {
+        horizontalInput = 0
     }
 
-    private func updateTarget(with touch: UITouch?) {
-        guard let touch else { return }
-        targetX = touch.location(in: self).x
+    func movePlayerVertically(direction: CGFloat) {
+        guard case .playing = gameState.phase else { return }
+        verticalInput = direction
+    }
+
+    func stopPlayerVerticalMovement() {
+        verticalInput = 0
     }
 
     private func checkSceneInteractions(at time: TimeInterval) {
@@ -137,6 +163,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             if isOverlapping {
                 handleObstacleContact(at: time)
                 break
+            }
+        }
+
+        for bonus in worldNode.children.compactMap({ $0 as? BonusNode }) {
+            let bonusCenter = CGPoint(x: bonus.position.x + worldNode.position.x,
+                                      y: bonus.position.y + worldNode.position.y)
+            let horizontalDistance = abs(playerCenter.x - bonusCenter.x)
+            let verticalDistance = abs(playerCenter.y - bonusCenter.y)
+            let isOverlapping = horizontalDistance <= playerHalfWidth + bonus.size.width / 2 &&
+                verticalDistance <= playerHalfHeight + bonus.size.height / 2
+
+            if isOverlapping {
+                handleBonusCollection(bonus)
             }
         }
 
@@ -231,6 +270,55 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         publishState()
     }
 
+    private func handleBonusCollection(_ bonus: BonusNode) {
+        guard case .playing = gameState.phase else { return }
+        bonus.removeFromParent()
+
+        switch bonus.kind {
+        case .food:
+            GameRules.applyFoodBonus(&gameState)
+        case .fire:
+            GameRules.applyFireBonus(&gameState)
+            showFireFeedback()
+            if gameState.health <= 0 {
+                finish(with: .healthDepleted)
+                return
+            }
+        }
+
+        publishState()
+    }
+
+    private func showFireFeedback() {
+        let flamePath = CGMutablePath()
+        flamePath.move(to: CGPoint(x: 0, y: 30))
+        flamePath.addLine(to: CGPoint(x: -16, y: 4))
+        flamePath.addLine(to: CGPoint(x: -8, y: 8))
+        flamePath.addLine(to: CGPoint(x: 0, y: -24))
+        flamePath.addLine(to: CGPoint(x: 10, y: 5))
+        flamePath.addLine(to: CGPoint(x: 16, y: 0))
+        flamePath.closeSubpath()
+
+        let flame = SKShapeNode(path: flamePath)
+        flame.name = "fireFeedback"
+        flame.fillColor = .systemOrange
+        flame.strokeColor = .systemRed
+        flame.lineWidth = 3
+        flame.position = CGPoint(x: 0, y: player.frame.height / 2 + 8)
+        player.addChild(flame)
+
+        let flicker = SKAction.sequence([
+            .scale(to: 1.12, duration: 0.12),
+            .scale(to: 0.92, duration: 0.16)
+        ])
+        flame.run(.repeatForever(flicker), withKey: "flameFlicker")
+        flame.run(.sequence([
+            .wait(forDuration: 0.9),
+            .fadeOut(withDuration: 0.18),
+            .removeFromParent()
+        ]), withKey: "flameLifetime")
+    }
+
     func consumeFood() {
         guard case .playing = gameState.phase else { return }
         if GameRules.consumeFood(&gameState) {
@@ -242,6 +330,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         guard case .playing = gameState.phase else { return }
         gameState.phase = .ended(reason)
         hasReachedDestination = true
+        horizontalInput = 0
+        verticalInput = 0
         worldNode.removeAllActions()
         player.removeAllActions()
         publishState()
@@ -255,9 +345,15 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func updateEncounters(deltaTime: TimeInterval) {
         if !didSpawnThief, elapsedStageTime >= GameConstants.thiefSpawnTime {
             didSpawnThief = true
+            let thiefOnLeft = Bool.random()
+            let thiefHalfWidth: CGFloat = 29
+            let sideInset: CGFloat = 42
+            let thiefX = thiefOnLeft
+                ? size.width / 2 - routeWidth / 2 + thiefHalfWidth + sideInset
+                : size.width / 2 + routeWidth / 2 - thiefHalfWidth - sideInset
             let thief = EncounterNode(kind: .thief,
-                                      position: CGPoint(x: size.width / 2 + routeWidth * 0.24,
-                                                        y: size.height - GameConstants.topTouchExclusionHeight - 50))
+                                      position: CGPoint(x: thiefX,
+                                                        y: player.position.y))
             encounterNodeLayer.addChild(thief)
         }
 
@@ -281,9 +377,27 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
             if encounter.shouldThrowProjectile(deltaTime: deltaTime),
                let effect = encounter.projectileEffect {
-                let projectile = ProjectileNode(effect: effect,
-                                                position: CGPoint(x: encounter.position.x,
-                                                                  y: encounter.position.y - 55))
+                let projectile: ProjectileNode
+                if encounter.kind == .thief {
+                    let direction: CGFloat = encounter.position.x < size.width / 2 ? 1 : -1
+                    let projectedTargetX = min(max(player.position.x + direction * 60,
+                                                   size.width / 2 - routeWidth / 2),
+                                               size.width / 2 + routeWidth / 2)
+                    let startX = encounter.position.x + direction * 38
+                    projectile = ProjectileNode(
+                        effect: effect,
+                        position: CGPoint(x: startX, y: encounter.position.y),
+                        velocity: CGVector(dx: direction * 320, dy: 0),
+                        maximumDistance: abs(projectedTargetX - startX) + 60
+                    )
+                } else {
+                    projectile = ProjectileNode(
+                        effect: effect,
+                        position: CGPoint(x: encounter.position.x,
+                                          y: encounter.position.y - 55),
+                        velocity: CGVector(dx: 0, dy: -GameConstants.projectileSpeed)
+                    )
+                }
                 encounterNodeLayer.addChild(projectile)
             }
 
@@ -293,8 +407,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         for projectile in encounterNodeLayer.children.compactMap({ $0 as? ProjectileNode }) {
-            projectile.position.y -= GameConstants.projectileSpeed * CGFloat(deltaTime)
-            if projectile.position.y < -40 {
+            let hasReachedTarget = projectile.updateMovement(deltaTime: deltaTime)
+            let isOffscreen = projectile.position.x < -60 || projectile.position.x > size.width + 60 ||
+                projectile.position.y < -60 || projectile.position.y > size.height + 60
+            if hasReachedTarget || isOffscreen {
                 projectile.removeFromParent()
             }
         }

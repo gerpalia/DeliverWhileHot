@@ -5,7 +5,18 @@
 	<key>colors</key>
 	<array/>
 	<key>images</key>
-	<array/>
+	<array>
+		<dict>
+			<key>catalogPath</key>
+			<string>/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/Assets.xcassets</string>
+			<key>objcSymbol</key>
+			<string>ACImageNameDeliverWhileHotSplash</string>
+			<key>relativePath</key>
+			<string>./DeliverWhileHotSplash.imageset</string>
+			<key>swiftSymbol</key>
+			<string>deliverWhileHotSplash</string>
+		</dict>
+	</array>
 	<key>symbols</key>
 	<array/>
 </dict>

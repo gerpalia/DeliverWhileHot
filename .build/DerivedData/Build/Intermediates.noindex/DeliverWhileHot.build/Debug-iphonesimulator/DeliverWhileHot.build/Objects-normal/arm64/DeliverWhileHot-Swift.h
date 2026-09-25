@@ -312,14 +312,10 @@ SWIFT_CLASS("_TtC15DeliverWhileHot13EncounterNode")
 + (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
 @end
 
-@class UITouch;
-@class UIEvent;
 @class SKPhysicsContact;
 SWIFT_CLASS("_TtC15DeliverWhileHot9GameScene")
 @interface GameScene : SKScene <SKPhysicsContactDelegate>
 - (void)update:(NSTimeInterval)currentTime;
-- (void)touchesBegan:(NSSet<UITouch *> * _Nonnull)touches withEvent:(UIEvent * _Nullable)event;
-- (void)touchesMoved:(NSSet<UITouch *> * _Nonnull)touches withEvent:(UIEvent * _Nullable)event;
 - (void)didBeginContact:(SKPhysicsContact * _Nonnull)contact;
 - (nonnull instancetype)initWithSize:(CGSize)size OBJC_DESIGNATED_INITIALIZER;
 - (nonnull instancetype)init OBJC_DESIGNATED_INITIALIZER;

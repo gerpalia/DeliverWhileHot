@@ -5,7 +5,7 @@
 
 import SpriteKit
 
-enum EncounterKind {
+enum EncounterKind: Equatable {
     case patrolOfficer
     case thief
     case pidgeot

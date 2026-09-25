@@ -6,4 +6,7 @@
 #define AC_SWIFT_PRIVATE
 #endif
 
+/// The "DeliverWhileHotSplash" asset catalog image resource.
+static NSString * const ACImageNameDeliverWhileHotSplash AC_SWIFT_PRIVATE = @"DeliverWhileHotSplash";
+
 #undef AC_SWIFT_PRIVATE

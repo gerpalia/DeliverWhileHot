@@ -9,8 +9,8 @@ enum GameConstants {
     static let playerPhysicsCategory: UInt32 = 1 << 0
     static let obstaclePhysicsCategory: UInt32 = 1 << 1
 
-    static let routeHeightMultiplier: CGFloat = 8.0
-    static let minimumRouteHeight: CGFloat = 4_200
+    static let targetStageDuration: TimeInterval = 20
+    static let minimumRouteHeight: CGFloat = 4_000
     static let routeWidthRatio: CGFloat = 0.82
     static let maximumRouteWidth: CGFloat = 420
 
@@ -18,6 +18,8 @@ enum GameConstants {
     static let playerCornerRadius: CGFloat = 10
     static let playerStartHeight: CGFloat = 120
     static let movementSmoothing: CGFloat = 0.16
+    static let playerMovementSpeed: CGFloat = 280
+    static let playerVerticalMovementSpeed: CGFloat = 220
     static let automaticScrollSpeed: CGFloat = 180
     static let topTouchExclusionHeight: CGFloat = 150
     static let bottomTouchExclusionHeight: CGFloat = 100

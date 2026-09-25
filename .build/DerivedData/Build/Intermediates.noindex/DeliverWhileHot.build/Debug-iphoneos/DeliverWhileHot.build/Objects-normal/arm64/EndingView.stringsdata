@@ -1,0 +1,80 @@
+{
+  "source": "/Users/gersondacunha/Documents/preparation/DeliverWhileHot/DeliverWhileHot/UI/EndingView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "ending.delivered.title",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 14
+        }
+      },
+      {
+        "comment": "",
+        "key": "ending.health_depleted.title",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 15
+        }
+      },
+      {
+        "comment": "",
+        "key": "ending.food_too_cold.title",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 16
+        }
+      },
+      {
+        "comment": "",
+        "key": "ending.insufficient_food.title",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 17
+        }
+      },
+      {
+        "comment": "",
+        "key": "ending.delivered.message",
+        "location": {
+          "startingColumn": 51,
+          "startingLine": 23
+        }
+      },
+      {
+        "comment": "",
+        "key": "ending.health_depleted.message",
+        "location": {
+          "startingColumn": 56,
+          "startingLine": 24
+        }
+      },
+      {
+        "comment": "",
+        "key": "ending.food_too_cold.message",
+        "location": {
+          "startingColumn": 53,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "ending.insufficient_food.message",
+        "location": {
+          "startingColumn": 58,
+          "startingLine": 26
+        }
+      },
+      {
+        "comment": "",
+        "key": "common.restart",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 39
+        }
+      }
+    ]
+  },
+  "version": 1
+}
