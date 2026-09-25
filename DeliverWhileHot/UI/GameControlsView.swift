@@ -28,7 +28,7 @@ struct GameControlsView: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 18)
+        .padding(.bottom, 8)
     }
 }
 
@@ -36,8 +36,8 @@ private struct VirtualJoystick: View {
     let onMove: (CGVector) -> Void
     @State private var knobOffset: CGSize = .zero
 
-    private let baseDiameter: CGFloat = 124
-    private let knobDiameter: CGFloat = 54
+    private let baseDiameter: CGFloat = 104
+    private let knobDiameter: CGFloat = 46
     private let deadZone: CGFloat = 0.12
 
     private var maximumOffset: CGFloat {

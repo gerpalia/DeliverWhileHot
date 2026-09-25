@@ -22,7 +22,9 @@ enum GameConstants {
     static let playerVerticalMovementSpeed: CGFloat = 220
     static let automaticScrollSpeed: CGFloat = 180
     static let topTouchExclusionHeight: CGFloat = 150
-    static let bottomTouchExclusionHeight: CGFloat = 100
+    static let bottomTouchExclusionHeight: CGFloat = 150
+    static let joystickSafeZoneRightEdge: CGFloat = 144
+    static let joystickSafeZoneTopEdge: CGFloat = 135
     static let collisionFeedbackDuration: TimeInterval = 0.18
     static let collisionCooldown: TimeInterval = 0.75
     static let officerSpawnTime: TimeInterval = 5

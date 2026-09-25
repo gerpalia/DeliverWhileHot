@@ -123,6 +123,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let minimumPlayerY = GameConstants.bottomTouchExclusionHeight + GameConstants.playerSize.height / 2 + 12
         let maximumPlayerY = size.height - GameConstants.topTouchExclusionHeight - GameConstants.playerSize.height / 2 - 12
         player.position.y = min(max(player.position.y, minimumPlayerY), maximumPlayerY)
+        keepPlayerAwayFromJoystick()
 
         checkSceneInteractions(at: currentTime)
         publishState()
@@ -242,6 +243,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         if reachedDestination {
             finish(with: GameRules.deliveryResult(for: gameState))
         }
+    }
+
+    private func keepPlayerAwayFromJoystick() {
+        let visualHalfWidth = player.frame.width / 2
+        let visualHalfHeight = player.frame.height / 2
+        let isNearJoystick = player.position.x - visualHalfWidth < GameConstants.joystickSafeZoneRightEdge &&
+            player.position.y - visualHalfHeight < GameConstants.joystickSafeZoneTopEdge
+
+        guard isNearJoystick else { return }
+
+        let safeX = GameConstants.joystickSafeZoneRightEdge + visualHalfWidth + 12
+        let halfRoad = routeWidth / 2 - GameConstants.playerSize.width / 2 - 8
+        player.position.x = min(safeX, size.width / 2 + halfRoad)
     }
 
     private func handleObstacleContact(at time: TimeInterval, startsBurning: Bool = false) {
