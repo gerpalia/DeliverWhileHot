@@ -24,7 +24,8 @@ struct ContentView: View {
                     Spacer()
                     if endReason == nil {
                         GameControlsView(
-                            canEat: gameState.health < GameState.maximumHealth &&
+                            canEat: !scene.isEating &&
+                                gameState.health < GameState.maximumHealth &&
                                 gameState.foodRemaining >= GameRules.foodCostPerMeal,
                             onMove: { vector in
                                 scene.setPlayerInput(horizontal: vector.dx, vertical: vector.dy)

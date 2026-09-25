@@ -34,22 +34,8 @@ struct GameNodeFactory {
         }
     }
 
-    func makePlayer() -> SKShapeNode {
-        let player = SKShapeNode(rectOf: GameConstants.playerSize,
-                                 cornerRadius: GameConstants.playerCornerRadius)
-        player.fillColor = GameConstants.playerColor
-        player.strokeColor = .white
-        player.lineWidth = 3
-
-        let body = SKPhysicsBody(rectangleOf: GameConstants.playerSize)
-        body.categoryBitMask = GameConstants.playerPhysicsCategory
-        body.collisionBitMask = 0
-        body.contactTestBitMask = GameConstants.obstaclePhysicsCategory
-        body.affectedByGravity = false
-        body.allowsRotation = false
-        body.isDynamic = true
-        player.physicsBody = body
-        return player
+    func makePlayer() -> PlayerNode {
+        PlayerNode()
     }
 
     func makeHazard(definition: HazardDefinition, position: CGPoint) -> HazardNode {

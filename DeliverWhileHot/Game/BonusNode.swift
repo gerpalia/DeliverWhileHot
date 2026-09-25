@@ -8,6 +8,7 @@ import SpriteKit
 enum BonusKind {
     case food
     case fire
+    case water
 
     var size: CGSize {
         CGSize(width: 58, height: 58)
@@ -19,6 +20,8 @@ enum BonusKind {
             return .systemGreen
         case .fire:
             return .systemOrange
+        case .water:
+            return .systemCyan
         }
     }
 
@@ -28,6 +31,8 @@ enum BonusKind {
             return "+ FOOD"
         case .fire:
             return "+ HEAT"
+        case .water:
+            return "WATER"
         }
     }
 }

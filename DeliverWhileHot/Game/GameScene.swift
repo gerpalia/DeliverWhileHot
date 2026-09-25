@@ -9,7 +9,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private let nodeFactory = GameNodeFactory()
     private let worldNode = SKNode()
     private let encounterNodeLayer = SKNode()
-    private var player = SKShapeNode()
+    private var player = PlayerNode()
     private var horizontalInput: CGFloat = 0
     private var verticalInput: CGFloat = 0
     private var routeWidth: CGFloat = 0
@@ -71,6 +71,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             position: CGPoint(x: size.width / 2 + routeWidth * 0.18,
                               y: routeHeight * 0.58)
         ))
+        worldNode.addChild(nodeFactory.makeBonus(
+            kind: .water,
+            position: CGPoint(x: size.width / 2 - routeWidth * 0.18,
+                              y: routeHeight * 0.76)
+        ))
 
         player = nodeFactory.makePlayer()
         player.position = CGPoint(x: size.width / 2, y: viewSize.height * 0.22)
@@ -106,15 +111,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                                   sceneWidth: size.width)
         }
 
-        player.position.x += horizontalInput * GameConstants.playerMovementSpeed * CGFloat(deltaTime)
-        player.position.y += verticalInput * GameConstants.playerVerticalMovementSpeed * CGFloat(deltaTime)
+        let movementMultiplier: CGFloat = player.isEating ? 0.45 : 1.0
+        player.setMovement(horizontal: horizontalInput, vertical: verticalInput)
+        player.position.x += horizontalInput * GameConstants.playerMovementSpeed * movementMultiplier * CGFloat(deltaTime)
+        player.position.y += verticalInput * GameConstants.playerVerticalMovementSpeed * movementMultiplier * CGFloat(deltaTime)
 
-        let halfRoad = routeWidth / 2 - player.frame.width / 2 - 8
+        let halfRoad = routeWidth / 2 - GameConstants.playerSize.width / 2 - 8
         player.position.x = min(max(player.position.x, size.width / 2 - halfRoad),
                                 size.width / 2 + halfRoad)
 
-        let minimumPlayerY = GameConstants.bottomTouchExclusionHeight + player.frame.height / 2 + 12
-        let maximumPlayerY = size.height - GameConstants.topTouchExclusionHeight - player.frame.height / 2 - 12
+        let minimumPlayerY = GameConstants.bottomTouchExclusionHeight + GameConstants.playerSize.height / 2 + 12
+        let maximumPlayerY = size.height - GameConstants.topTouchExclusionHeight - GameConstants.playerSize.height / 2 - 12
         player.position.y = min(max(player.position.y, minimumPlayerY), maximumPlayerY)
 
         checkSceneInteractions(at: currentTime)
@@ -130,6 +137,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         guard case .playing = gameState.phase else { return }
         horizontalInput = max(-1, min(1, horizontal))
         verticalInput = max(-1, min(1, vertical))
+        player.setMovement(horizontal: horizontalInput, vertical: verticalInput)
     }
 
     func stopPlayerMovement() {
@@ -147,8 +155,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func checkSceneInteractions(at time: TimeInterval) {
         let playerCenter = player.position
-        let playerHalfWidth = player.frame.width / 2
-        let playerHalfHeight = player.frame.height / 2
+        let playerHalfWidth = GameConstants.playerSize.width / 2
+        let playerHalfHeight = GameConstants.playerSize.height / 2
 
         for hazard in worldNode.children.compactMap({ $0 as? HazardNode }) {
             let hazardCenter = CGPoint(x: hazard.position.x + worldNode.position.x,
@@ -217,7 +225,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 projectile.removeFromParent()
                 switch projectile.effect {
                 case .damageHealth:
-                    handleObstacleContact(at: time)
+                    handleObstacleContact(at: time, startsBurning: true)
                 case .spoilFood:
                     handlePidgeotMess(at: time)
                 }
@@ -236,17 +244,14 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
-    private func handleObstacleContact(at time: TimeInterval) {
+    private func handleObstacleContact(at time: TimeInterval, startsBurning: Bool = false) {
         guard time - lastCollisionTime >= GameConstants.collisionCooldown else { return }
         lastCollisionTime = time
 
-        player.removeAction(forKey: "collisionFeedback")
-        let feedback = SKAction.sequence([
-            .run { [weak self] in self?.player.fillColor = .red },
-            .wait(forDuration: GameConstants.collisionFeedbackDuration),
-            .run { [weak self] in self?.player.fillColor = GameConstants.playerColor }
-        ])
-        player.run(feedback, withKey: "collisionFeedback")
+        if startsBurning {
+            player.setBurning(true)
+        }
+        player.playHitAnimation()
         GameRules.applyObstacleDamage(&gameState)
         if gameState.health <= 0 {
             finish(with: .healthDepleted)
@@ -279,51 +284,27 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             GameRules.applyFoodBonus(&gameState)
         case .fire:
             GameRules.applyFireBonus(&gameState)
-            showFireFeedback()
             if gameState.health <= 0 {
                 finish(with: .healthDepleted)
                 return
             }
+        case .water:
+            player.setBurning(false)
         }
 
         publishState()
     }
 
-    private func showFireFeedback() {
-        let flamePath = CGMutablePath()
-        flamePath.move(to: CGPoint(x: 0, y: 30))
-        flamePath.addLine(to: CGPoint(x: -16, y: 4))
-        flamePath.addLine(to: CGPoint(x: -8, y: 8))
-        flamePath.addLine(to: CGPoint(x: 0, y: -24))
-        flamePath.addLine(to: CGPoint(x: 10, y: 5))
-        flamePath.addLine(to: CGPoint(x: 16, y: 0))
-        flamePath.closeSubpath()
-
-        let flame = SKShapeNode(path: flamePath)
-        flame.name = "fireFeedback"
-        flame.fillColor = .systemOrange
-        flame.strokeColor = .systemRed
-        flame.lineWidth = 3
-        flame.position = CGPoint(x: 0, y: player.frame.height / 2 + 8)
-        player.addChild(flame)
-
-        let flicker = SKAction.sequence([
-            .scale(to: 1.12, duration: 0.12),
-            .scale(to: 0.92, duration: 0.16)
-        ])
-        flame.run(.repeatForever(flicker), withKey: "flameFlicker")
-        flame.run(.sequence([
-            .wait(forDuration: 0.9),
-            .fadeOut(withDuration: 0.18),
-            .removeFromParent()
-        ]), withKey: "flameLifetime")
-    }
-
     func consumeFood() {
         guard case .playing = gameState.phase else { return }
-        if GameRules.consumeFood(&gameState) {
+        guard GameRules.consumeFood(&gameState) else { return }
+        if player.startEating() {
             publishState()
         }
+    }
+
+    var isEating: Bool {
+        player.isEating
     }
 
     private func finish(with reason: GameEndReason) {
@@ -333,7 +314,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         horizontalInput = 0
         verticalInput = 0
         worldNode.removeAllActions()
-        player.removeAllActions()
+        player.stopAnimations()
         publishState()
         onFinished?(reason)
     }
