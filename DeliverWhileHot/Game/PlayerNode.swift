@@ -99,20 +99,8 @@ final class PlayerNode: SKNode {
     }
 
     func playHealthRecoveryAnimation() {
-        let pulse = SKShapeNode(circleOfRadius: 18)
-        pulse.fillColor = SKColor.systemGreen.withAlphaComponent(0.18)
-        pulse.strokeColor = SKColor.systemGreen.withAlphaComponent(0.82)
-        pulse.lineWidth = 2.5
-        pulse.zPosition = 10
-        pulse.setScale(0.35)
-        addChild(pulse)
-
-        let expand = SKAction.scale(to: 1.9, duration: 0.42)
-        let fade = SKAction.fadeOut(withDuration: 0.42)
-        pulse.run(.sequence([
-            .group([expand, fade]),
-            .removeFromParent()
-        ]))
+        childNode(withName: "healingEffect")?.removeFromParent()
+        addChild(HealingEffectNode())
     }
 
     func setMovement(horizontal: CGFloat, vertical: CGFloat) {

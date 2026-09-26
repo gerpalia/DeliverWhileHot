@@ -7,6 +7,7 @@ import SpriteKit
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var scene = GameScene()
     @State private var gameState = GameState()
     @State private var endReason: GameEndReason?
@@ -21,14 +22,15 @@ struct ContentView: View {
                     .id(sceneID)
 
                 VStack {
-                    GameHUDView(state: gameState)
+                    GameHUDView(state: gameState,
+                                molotovCount: scene.availableMolotovs)
                     Spacer()
                     if endReason == nil {
                         GameControlsView(
-                            canEat: !scene.isEating &&
-                                gameState.health < GameState.maximumHealth &&
-                                gameState.foodRemaining >= GameRules.foodCostPerMeal,
+                            canEat: scene.canEat,
+                            eatCooldownProgress: scene.eatCooldownProgress,
                             canThrowMolotov: scene.canThrowMolotov,
+                            molotovCooldownProgress: scene.molotovCooldownProgress,
                             onMove: { vector in
                                 scene.setPlayerInput(horizontal: vector.dx, vertical: vector.dy)
                             },
@@ -53,6 +55,13 @@ struct ContentView: View {
             }
             .onDisappear {
                 stageMusic.stop()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    stageMusic.play(resourceName: "kulakovka-epic-beat-278463.mp3", volume: 0.22)
+                } else {
+                    stageMusic.stop()
+                }
             }
         }
     }

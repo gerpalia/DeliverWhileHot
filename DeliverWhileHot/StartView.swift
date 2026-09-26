@@ -6,6 +6,7 @@
 import SwiftUI
 
 struct StartView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @State private var isGameStarted = false
     @State private var presentedPage: MenuPage?
     @StateObject private var menuMusic = BackgroundMusicPlayer()
@@ -22,10 +23,24 @@ struct StartView: View {
             MenuInformationView(page: page)
         }
         .onAppear {
-            menuMusic.play(resourceName: "aliabbasabasov-epic-heavy-type-beat-rap-instrumental-prod5xbeatz-524490.mp3", volume: 0.32)
+            if !isGameStarted {
+                menuMusic.play(resourceName: "aliabbasabasov-epic-heavy-type-beat-rap-instrumental-prod5xbeatz-524490.mp3", volume: 0.32)
+            }
         }
         .onDisappear {
             menuMusic.stop()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard !isGameStarted else {
+                menuMusic.stop()
+                return
+            }
+
+            if phase == .active {
+                menuMusic.play(resourceName: "aliabbasabasov-epic-heavy-type-beat-rap-instrumental-prod5xbeatz-524490.mp3", volume: 0.32)
+            } else {
+                menuMusic.stop()
+            }
         }
     }
 

@@ -31,8 +31,12 @@ enum GameConstants {
     static let hitAnimationFrameDuration: TimeInterval = 0.16
     static let hitStopDuration: TimeInterval = 0.28
     static let bonusStopDuration: TimeInterval = 0.16
-    static let perfectParryWindow: TimeInterval = 0.20
+    static let perfectParryWindow: TimeInterval = 0.12
     static let blockImpactCooldown: TimeInterval = 0.30
+    static let eatCooldown: TimeInterval = 3.0
+    static let molotovCooldown: TimeInterval = 6.0
+    static let startingMolotovCount = 3
+    static let maximumMolotovCount = 5
     static let parrySlowMotionDuration: TimeInterval = 0.18
     static let parrySlowMotionFactor: TimeInterval = 0.25
     static let blockFrameDuration: TimeInterval = 0.08

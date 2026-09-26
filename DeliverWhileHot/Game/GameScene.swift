@@ -25,6 +25,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var blockStartedAt: TimeInterval = -.infinity
     private var lastBlockImpactTime: TimeInterval = -.infinity
     private var didParryDuringCurrentBlock = false
+    private var lastEatTime: TimeInterval = -.infinity
+    private var lastMolotovTime: TimeInterval = -.infinity
+    private var molotovCount = GameConstants.startingMolotovCount
     private var didSpawnOfficer = false
     private var didSpawnThief = false
     private var didSpawnPidgeot = false
@@ -68,7 +71,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         nodeFactory.makeBoundaries(width: size.width, routeWidth: routeWidth, height: routeHeight).forEach(worldNode.addChild)
         worldNode.addChild(nodeFactory.makeDestination(width: size.width, routeWidth: routeWidth, height: routeHeight))
         worldNode.addChild(nodeFactory.makeBonus(
-            kind: .food,
+            kind: .foodSteal,
             position: CGPoint(x: size.width / 2 - routeWidth * 0.18,
                               y: routeHeight * 0.36)
         ))
@@ -184,13 +187,18 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func throwMolotov() {
+        let currentTime = lastUpdateTime ?? 0
         guard case .playing = gameState.phase,
               !player.isEating,
-              !player.isThrowing else { return }
+              !player.isThrowing,
+              molotovCount > 0,
+              currentTime - lastMolotovTime >= GameConstants.molotovCooldown else { return }
 
         let direction = lastMovementDirection
-        _ = player.startThrowing { [weak self] in
+        guard player.startThrowing(onRelease: { [weak self] in
             guard let self else { return }
+            self.molotovCount = max(0, self.molotovCount - 1)
+            self.lastMolotovTime = self.lastUpdateTime ?? currentTime
             let startPosition = CGPoint(
                 x: self.player.position.x + direction.dx * 42,
                 y: self.player.position.y + direction.dy * 42
@@ -202,7 +210,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             self.encounterNodeLayer.addChild(
                 MolotovProjectileNode(position: startPosition, velocity: velocity)
             )
-        }
+            self.publishState()
+        }) else { return }
+        publishState()
     }
 
     func setBlocking(_ blocking: Bool) {
@@ -221,8 +231,40 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     var canThrowMolotov: Bool {
+        let currentTime = lastUpdateTime ?? 0
         guard case .playing = gameState.phase else { return false }
-        return !player.isEating && !player.isThrowing
+        return !player.isEating &&
+            !player.isThrowing &&
+            molotovCount > 0 &&
+            currentTime - lastMolotovTime >= GameConstants.molotovCooldown
+    }
+
+    var availableMolotovs: Int {
+        molotovCount
+    }
+
+    var canEat: Bool {
+        let currentTime = lastUpdateTime ?? 0
+        guard case .playing = gameState.phase else { return false }
+        return !player.isEating &&
+            gameState.health < GameState.maximumHealth &&
+            gameState.foodRemaining >= GameRules.foodCostPerMeal &&
+            currentTime - lastEatTime >= GameConstants.eatCooldown
+    }
+
+    var eatCooldownProgress: CGFloat {
+        cooldownProgress(since: lastEatTime, duration: GameConstants.eatCooldown)
+    }
+
+    var molotovCooldownProgress: CGFloat {
+        cooldownProgress(since: lastMolotovTime, duration: GameConstants.molotovCooldown)
+    }
+
+    private func cooldownProgress(since startTime: TimeInterval,
+                                  duration: TimeInterval) -> CGFloat {
+        let currentTime = lastUpdateTime ?? 0
+        guard startTime.isFinite else { return 1 }
+        return min(1, max(0, CGFloat((currentTime - startTime) / duration)))
     }
 
     private func checkSceneInteractions(at time: TimeInterval) {
@@ -493,10 +535,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             return .blocked
         }
 
+        guard time - lastCollisionTime >= GameConstants.collisionCooldown else {
+            return .blocked
+        }
+
         lastBlockImpactTime = time
+        lastCollisionTime = time
+        GameRules.applyBlockedHitFoodLoss(&gameState)
         run(.playSoundFileNamed(GameConstants.blockImpactSoundName,
                                 waitForCompletion: false),
             withKey: "blockImpactSound")
+        publishState()
         return .blocked
     }
 
@@ -517,16 +566,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func handleBonusCollection(_ bonus: BonusNode) {
-        guard case .playing = gameState.phase else { return }
-        bonus.removeFromParent()
+        guard case .playing = gameState.phase,
+              !bonus.isCollected else { return }
         beginFreeze(for: GameConstants.bonusStopDuration)
         run(.playSoundFileNamed(GameConstants.bonusPickupSoundName,
                                 waitForCompletion: false))
 
         switch bonus.kind {
-        case .food:
-            GameRules.applyFoodBonus(&gameState)
+        case .foodSteal:
+            GameRules.applyPizzaStealBonus(&gameState)
         case .fire:
+            bonus.removeFromParent()
             GameRules.applyFireBonus(&gameState)
             playBuffSound()
             if gameState.health <= 0 {
@@ -534,16 +584,22 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 return
             }
         case .water:
+            bonus.removeFromParent()
             player.setBurning(false)
             playBuffSound()
         }
 
+        if bonus.kind == .foodSteal {
+            bonus.collect()
+        }
         publishState()
     }
 
     func consumeFood() {
-        guard case .playing = gameState.phase else { return }
+        let currentTime = lastUpdateTime ?? 0
+        guard canEat else { return }
         guard GameRules.consumeFood(&gameState) else { return }
+        lastEatTime = currentTime
         run(.playSoundFileNamed(GameConstants.healthRecoverySoundName,
                                 waitForCompletion: false),
             withKey: "healthRecoverySound")

@@ -8,8 +8,9 @@ struct GameRules {
     static let damagePerObstacleContact = 1
     static let foodCostPerMeal = 0.25
     static let bribeFoodCost = 0.25
-    static let pidgeotFoodLoss = 0.20
-    static let foodBonusAmount = 0.15
+    static let pidgeotFoodLoss = 0.25
+    static let pizzaStealFoodAmount = 0.50
+    static let blockedHitFoodLoss = 0.25
     static let fireBonusTemperature = 0.20
     static let fireBonusDamage = 1
     static let healthRestoredPerMeal = 1
@@ -35,8 +36,12 @@ struct GameRules {
         state.foodRemaining = max(0, state.foodRemaining - pidgeotFoodLoss)
     }
 
-    static func applyFoodBonus(_ state: inout GameState) {
-        state.foodRemaining = min(1.0, state.foodRemaining + foodBonusAmount)
+    static func applyBlockedHitFoodLoss(_ state: inout GameState) {
+        state.foodRemaining = max(0, state.foodRemaining - blockedHitFoodLoss)
+    }
+
+    static func applyPizzaStealBonus(_ state: inout GameState) {
+        state.foodRemaining = min(1.0, state.foodRemaining + pizzaStealFoodAmount)
     }
 
     static func applyFireBonus(_ state: inout GameState) {

@@ -47,6 +47,10 @@ final class BackgroundMusicPlayer: NSObject, ObservableObject {
         player?.stop()
         player = nil
         currentResourceName = nil
+        try? AVAudioSession.sharedInstance().setActive(
+            false,
+            options: .notifyOthersOnDeactivation
+        )
     }
 
     deinit {
