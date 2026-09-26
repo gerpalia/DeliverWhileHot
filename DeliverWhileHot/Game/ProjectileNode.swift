@@ -15,6 +15,7 @@ final class ProjectileNode: SKNode {
     let effect: ProjectileEffect
     private var velocity: CGVector
     private var remainingDistance: CGFloat?
+    private(set) var isReflected = false
 
     init(effect: ProjectileEffect,
          position: CGPoint,
@@ -49,6 +50,20 @@ final class ProjectileNode: SKNode {
             return (self.remainingDistance ?? 0) <= 0
         }
         return false
+    }
+
+    func reflect() {
+        guard effect == .damageHealth else { return }
+        velocity = CGVector(dx: -velocity.dx, dy: -velocity.dy)
+        remainingDistance = nil
+        isReflected = true
+        visualNode.fillColor = .systemYellow
+        visualNode.strokeColor = .white
+        visualNode.removeAction(forKey: "reflectedPulse")
+        visualNode.run(.repeatForever(.sequence([
+            .scale(to: 1.25, duration: 0.08),
+            .scale(to: 1.0, duration: 0.08)
+        ])), withKey: "reflectedPulse")
     }
 
     required init?(coder aDecoder: NSCoder) {

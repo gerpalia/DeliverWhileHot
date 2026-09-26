@@ -31,6 +31,11 @@ enum GameConstants {
     static let hitAnimationFrameDuration: TimeInterval = 0.16
     static let hitStopDuration: TimeInterval = 0.28
     static let bonusStopDuration: TimeInterval = 0.16
+    static let perfectParryWindow: TimeInterval = 0.20
+    static let blockImpactCooldown: TimeInterval = 0.30
+    static let parrySlowMotionDuration: TimeInterval = 0.18
+    static let parrySlowMotionFactor: TimeInterval = 0.25
+    static let blockFrameDuration: TimeInterval = 0.08
     static let molotovThrowFrameDuration: TimeInterval = 0.14
     static let molotovProjectileSpeed: CGFloat = 420
     static let officerSpawnTime: TimeInterval = 5
@@ -60,6 +65,8 @@ enum GameConstants {
     static let dangerSoundName = "danger_sting.wav"
     static let molotovGlassSoundName = "molotov_glass.wav"
     static let molotovExplosionSoundName = "molotov_explosion.wav"
+    static let blockImpactSoundName = "block_impact.wav"
+    static let parrySoundName = "parry_zoom.wav"
 
     static let obstacleRadius: CGFloat = 28
     static let destinationHeight: CGFloat = 96

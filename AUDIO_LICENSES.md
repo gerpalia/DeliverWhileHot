@@ -18,6 +18,8 @@ Licensing is not verified by the filenames alone. Before distribution, record th
 | `machine_gun.wav` | `freesound_community-clean-machine-gun-burst-98224.mp3` | Extracted short candidate, normalized, mono WAV | Verify source license |
 | `stage_gong.wav` | `cartoon_music-gong-hit-large-amp-resonate-504492.mp3` | Trimmed/capped, normalized, mono WAV | Verify source license |
 | `bone_break.wav` | `universfield-bone-break-2-140224.mp3` | Trimmed, normalized, mono WAV | Verify source license |
+| `block_impact.wav` | `yodguard-shield_impact-6-382409.mp3` | Trimmed to 0.50 seconds, normalized, mono WAV | Pixabay Content License; Pixabay Sound Effects, creator yodguard, asset 382409; direct URL: `[Recover exact Pixabay URL for asset 382409]` |
+| `parry_zoom.wav` | `emircanalp-zoom-sound-effect-125029.mp3` | Trimmed to 0.80 seconds, normalized, mono WAV | Pixabay Content License; Pixabay Sound Effects, creator emircanalp, asset 125029; direct URL: `[Recover exact Pixabay URL for asset 125029]` |
 
 ## Bonus and buff feedback
 

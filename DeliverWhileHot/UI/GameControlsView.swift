@@ -11,6 +11,7 @@ struct GameControlsView: View {
     let onMove: (CGVector) -> Void
     let onEat: () -> Void
     let onThrowMolotov: () -> Void
+    let onBlockChanged: (Bool) -> Void
 
     var body: some View {
         HStack(alignment: .bottom) {
@@ -21,7 +22,7 @@ struct GameControlsView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     CommandButton(title: "controls.eat", symbol: "🍕", isEnabled: canEat, action: onEat)
-                    CommandButton(title: "controls.block", symbol: "🛡️", isEnabled: false, action: {})
+                    CommandButton(title: "controls.block", symbol: "🛡️", isEnabled: true, action: {}, onPressChanged: onBlockChanged)
                 }
                 HStack(spacing: 8) {
                     CommandButton(title: "controls.molotov", symbol: "🔥", isEnabled: canThrowMolotov, action: onThrowMolotov)
@@ -116,6 +117,7 @@ private struct CommandButton: View {
     let symbol: String
     let isEnabled: Bool
     let action: () -> Void
+    var onPressChanged: ((Bool) -> Void)? = nil
 
     var body: some View {
         Button(action: action) {
@@ -131,6 +133,12 @@ private struct CommandButton: View {
                     .stroke(.white.opacity(isEnabled ? 0.55 : 0.2), lineWidth: 1)
             }
         }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in onPressChanged?(true) }
+                .onEnded { _ in onPressChanged?(false) },
+            including: onPressChanged == nil ? .subviews : .all
+        )
         .foregroundStyle(.white.opacity(isEnabled ? 1 : 0.35))
         .disabled(!isEnabled)
     }

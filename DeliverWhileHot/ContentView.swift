@@ -33,7 +33,10 @@ struct ContentView: View {
                                 scene.setPlayerInput(horizontal: vector.dx, vertical: vector.dy)
                             },
                             onEat: { scene.consumeFood() },
-                            onThrowMolotov: { scene.throwMolotov() }
+                            onThrowMolotov: { scene.throwMolotov() },
+                            onBlockChanged: { isBlocking in
+                                scene.setBlocking(isBlocking)
+                            }
                         )
                     }
                 }

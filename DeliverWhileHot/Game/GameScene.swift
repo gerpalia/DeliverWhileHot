@@ -21,6 +21,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var isConfigured = false
     private var elapsedStageTime: TimeInterval = 0
     private var freezeRemaining: TimeInterval = 0
+    private var slowMotionRemaining: TimeInterval = 0
+    private var blockStartedAt: TimeInterval = -.infinity
+    private var lastBlockImpactTime: TimeInterval = -.infinity
+    private var didParryDuringCurrentBlock = false
     private var didSpawnOfficer = false
     private var didSpawnThief = false
     private var didSpawnPidgeot = false
@@ -98,19 +102,28 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             return
         }
 
-        GameRules.advanceTemperature(&gameState, by: deltaTime)
+        var gameplayDeltaTime = deltaTime
+        if slowMotionRemaining > 0 {
+            slowMotionRemaining = max(0, slowMotionRemaining - deltaTime)
+            gameplayDeltaTime *= GameConstants.parrySlowMotionFactor
+            if slowMotionRemaining == 0 {
+                endSlowMotion()
+            }
+        }
+
+        GameRules.advanceTemperature(&gameState, by: gameplayDeltaTime)
         if gameState.foodTemperature <= 0 {
             finish(with: .foodTooCold)
             return
         }
 
-        elapsedStageTime += deltaTime
-        updateWorldHazards(deltaTime: deltaTime)
-        updatePatrolOfficer(deltaTime: deltaTime)
-        updateEncounters(deltaTime: deltaTime)
-        updateMolotovProjectiles(deltaTime: deltaTime)
+        elapsedStageTime += gameplayDeltaTime
+        updateWorldHazards(deltaTime: gameplayDeltaTime)
+        updatePatrolOfficer(deltaTime: gameplayDeltaTime)
+        updateEncounters(deltaTime: gameplayDeltaTime)
+        updateMolotovProjectiles(deltaTime: gameplayDeltaTime)
 
-        worldNode.position.y -= GameConstants.automaticScrollSpeed * deltaTime
+        worldNode.position.y -= GameConstants.automaticScrollSpeed * CGFloat(gameplayDeltaTime)
         if worldNode.position.y <= -routeHeight {
             finish(with: GameRules.deliveryResult(for: gameState))
             return
@@ -192,6 +205,21 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+    func setBlocking(_ blocking: Bool) {
+        guard case .playing = gameState.phase else { return }
+
+        if blocking {
+            guard !player.isBlocking else { return }
+            guard player.startBlocking() else { return }
+            blockStartedAt = lastUpdateTime ?? 0
+            didParryDuringCurrentBlock = false
+        } else {
+            player.stopBlocking()
+            blockStartedAt = -.infinity
+            didParryDuringCurrentBlock = false
+        }
+    }
+
     var canThrowMolotov: Bool {
         guard case .playing = gameState.phase else { return false }
         return !player.isEating && !player.isThrowing
@@ -266,6 +294,15 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             let verticalDistance = abs(playerCenter.y - projectile.position.y)
             if horizontalDistance <= playerHalfWidth + 10 &&
                 verticalDistance <= playerHalfHeight + 10 {
+                if player.isBlocking {
+                    let blockResult = handleBlockedHit(at: time)
+                    if blockResult == .parried && projectile.effect == .damageHealth {
+                        projectile.reflect()
+                    } else {
+                        projectile.removeFromParent()
+                    }
+                    continue
+                }
                 projectile.removeFromParent()
                 switch projectile.effect {
                 case .damageHealth:
@@ -273,6 +310,52 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                     handleObstacleContact(at: time, startsBurning: true)
                 case .spoilFood:
                     handlePidgeotMess(at: time)
+                }
+            }
+        }
+
+        for projectile in encounterNodeLayer.children.compactMap({ $0 as? ProjectileNode })
+            where projectile.isReflected {
+            for hazard in worldNode.children.compactMap({ $0 as? HazardNode }) {
+                let hazardCenter = CGPoint(x: hazard.position.x + worldNode.position.x,
+                                           y: hazard.position.y + worldNode.position.y)
+                let horizontalDistance = abs(projectile.position.x - hazardCenter.x)
+                let verticalDistance = abs(projectile.position.y - hazardCenter.y)
+                let hazardHalfWidth = hazard.definition.size.width / 2
+                let hazardHalfHeight = hazard.definition.size.height / 2
+                let didHitHazard = horizontalDistance <= hazardHalfWidth + 12 &&
+                    verticalDistance <= hazardHalfHeight + 12
+
+                if didHitHazard {
+                    let impactPosition = CGPoint(x: hazardCenter.x,
+                                                  y: hazardCenter.y)
+                    hazard.removeFromParent()
+                    projectile.removeFromParent()
+                    encounterNodeLayer.addChild(ParryEffectNode(position: impactPosition))
+                    run(.playSoundFileNamed(GameConstants.blockImpactSoundName,
+                                            waitForCompletion: false),
+                        withKey: "reflectedImpactSound")
+                    break
+                }
+            }
+
+            guard projectile.parent != nil else { continue }
+
+            for encounter in encounterNodeLayer.children.compactMap({ $0 as? EncounterNode })
+                where encounter.kind == .thief || encounter.kind == .pidgeot {
+                let horizontalDistance = abs(projectile.position.x - encounter.position.x)
+                let verticalDistance = abs(projectile.position.y - encounter.position.y)
+                let didHitEncounter = horizontalDistance <= 42 && verticalDistance <= 42
+
+                if didHitEncounter {
+                    let impactPosition = encounter.position
+                    encounter.removeFromParent()
+                    projectile.removeFromParent()
+                    encounterNodeLayer.addChild(ParryEffectNode(position: impactPosition))
+                    run(.playSoundFileNamed(GameConstants.blockImpactSoundName,
+                                            waitForCompletion: false),
+                        withKey: "reflectedImpactSound")
+                    break
                 }
             }
         }
@@ -352,9 +435,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         player.position.x = min(safeX, size.width / 2 + halfRoad)
     }
 
+    private enum BlockResult: Equatable {
+        case blocked
+        case parried
+    }
+
     private func handleObstacleContact(at time: TimeInterval,
                                       startsBurning: Bool = false,
                                       hazardKind: HazardKind? = nil) {
+        if player.isBlocking {
+            handleBlockedHit(at: time)
+            return
+        }
+
         guard time - lastCollisionTime >= GameConstants.hitInvincibilityDuration else { return }
         lastCollisionTime = time
 
@@ -376,6 +469,35 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             finish(with: .healthDepleted)
         }
         publishState()
+    }
+
+    @discardableResult
+    private func handleBlockedHit(at time: TimeInterval) -> BlockResult {
+        guard player.isBlocking else { return .blocked }
+
+        let isPerfectParry = !didParryDuringCurrentBlock &&
+            time - blockStartedAt <= GameConstants.perfectParryWindow
+
+        if isPerfectParry {
+            didParryDuringCurrentBlock = true
+            lastCollisionTime = time
+            encounterNodeLayer.addChild(ParryEffectNode(position: player.position))
+            run(.playSoundFileNamed(GameConstants.parrySoundName,
+                                    waitForCompletion: false),
+                withKey: "parrySound")
+            beginSlowMotion(for: GameConstants.parrySlowMotionDuration)
+            return .parried
+        }
+
+        guard time - lastBlockImpactTime >= GameConstants.blockImpactCooldown else {
+            return .blocked
+        }
+
+        lastBlockImpactTime = time
+        run(.playSoundFileNamed(GameConstants.blockImpactSoundName,
+                                waitForCompletion: false),
+            withKey: "blockImpactSound")
+        return .blocked
     }
 
     private func handleOfficerInteraction(at time: TimeInterval) {
@@ -457,6 +579,21 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         encounterNodeLayer.speed = 0
         player.speed = 0
         physicsWorld.speed = 0
+    }
+
+    private func beginSlowMotion(for duration: TimeInterval) {
+        slowMotionRemaining = max(slowMotionRemaining, duration)
+        worldNode.speed = GameConstants.parrySlowMotionFactor
+        encounterNodeLayer.speed = GameConstants.parrySlowMotionFactor
+        player.speed = GameConstants.parrySlowMotionFactor
+        physicsWorld.speed = GameConstants.parrySlowMotionFactor
+    }
+
+    private func endSlowMotion() {
+        worldNode.speed = 1
+        encounterNodeLayer.speed = 1
+        player.speed = 1
+        physicsWorld.speed = 1
     }
 
     private func endFreeze() {

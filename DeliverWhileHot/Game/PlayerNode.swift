@@ -15,6 +15,7 @@ enum PlayerAction {
     case eating
     case hit
     case throwing
+    case blocking
 }
 
 final class PlayerNode: SKNode {
@@ -29,6 +30,10 @@ final class PlayerNode: SKNode {
 
     var isThrowing: Bool {
         actionState == .throwing
+    }
+
+    var isBlocking: Bool {
+        actionState == .blocking
     }
 
     override init() {
@@ -68,6 +73,20 @@ final class PlayerNode: SKNode {
 
     func playHitAnimation() {
         actionState = .hit
+        updateAnimation()
+    }
+
+    @discardableResult
+    func startBlocking() -> Bool {
+        guard actionState == .riding else { return false }
+        actionState = .blocking
+        updateAnimation()
+        return true
+    }
+
+    func stopBlocking() {
+        guard actionState == .blocking else { return }
+        actionState = .riding
         updateAnimation()
     }
 
@@ -154,6 +173,9 @@ final class PlayerNode: SKNode {
         case (.normal, .throwing), (.burning, .throwing):
             textureName = "DeliverWhileHotPlayerMolotovThrow"
             frameCount = 5
+        case (_, .blocking):
+            textureName = "DeliverWhileHotPlayerBlock"
+            frameCount = 5
         }
 
         let sheet = SKTexture(imageNamed: textureName)
@@ -175,7 +197,18 @@ final class PlayerNode: SKNode {
                                  height: textureSize.height * scale)
         spriteNode.colorBlendFactor = 0
 
-        if actionState == .throwing {
+        if actionState == .blocking {
+            let frameDuration = GameConstants.blockFrameDuration
+            let blockingFrames = Array(frames.prefix(4))
+            let animation = SKAction.sequence([
+                .animate(with: blockingFrames,
+                         timePerFrame: frameDuration,
+                         resize: false,
+                         restore: false),
+                .setTexture(blockingFrames.last ?? frames[0])
+            ])
+            spriteNode.run(animation, withKey: "blockAnimation")
+        } else if actionState == .throwing {
             let frameDuration = GameConstants.molotovThrowFrameDuration
             let releaseAction = SKAction.run { onThrowRelease?() }
             let animation = SKAction.sequence([
