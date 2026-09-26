@@ -7,8 +7,10 @@ import SwiftUI
 
 struct GameControlsView: View {
     let canEat: Bool
+    let canThrowMolotov: Bool
     let onMove: (CGVector) -> Void
     let onEat: () -> Void
+    let onThrowMolotov: () -> Void
 
     var body: some View {
         HStack(alignment: .bottom) {
@@ -22,7 +24,7 @@ struct GameControlsView: View {
                     CommandButton(title: "controls.block", symbol: "🛡️", isEnabled: false, action: {})
                 }
                 HStack(spacing: 8) {
-                    CommandButton(title: "controls.molotov", symbol: "🔥", isEnabled: false, action: {})
+                    CommandButton(title: "controls.molotov", symbol: "🔥", isEnabled: canThrowMolotov, action: onThrowMolotov)
                     CommandButton(title: "controls.item", symbol: "🎒", isEnabled: false, action: {})
                 }
             }

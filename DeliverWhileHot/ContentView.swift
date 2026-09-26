@@ -28,10 +28,12 @@ struct ContentView: View {
                             canEat: !scene.isEating &&
                                 gameState.health < GameState.maximumHealth &&
                                 gameState.foodRemaining >= GameRules.foodCostPerMeal,
+                            canThrowMolotov: scene.canThrowMolotov,
                             onMove: { vector in
                                 scene.setPlayerInput(horizontal: vector.dx, vertical: vector.dy)
                             },
-                            onEat: { scene.consumeFood() }
+                            onEat: { scene.consumeFood() },
+                            onThrowMolotov: { scene.throwMolotov() }
                         )
                     }
                 }

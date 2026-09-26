@@ -15,15 +15,24 @@ final class EncounterNode: SKNode {
     let kind: EncounterKind
     private let visualNode: SKShapeNode
     private let fixedX: CGFloat
+    private let entryStartX: CGFloat
+    private let entryDuration: TimeInterval
     private let horizontalDirection: CGFloat
     private var elapsedTime: TimeInterval = 0
+    private var entryElapsedTime: TimeInterval = 0
     private var projectileTimer: TimeInterval = 0
     private(set) var projectilesThrown = 0
     private var reachedScreenEdge = false
 
-    init(kind: EncounterKind, position: CGPoint, horizontalDirection: CGFloat = 1) {
+    init(kind: EncounterKind,
+         position: CGPoint,
+         horizontalDirection: CGFloat = 1,
+         entryStartX: CGFloat? = nil,
+         entryDuration: TimeInterval = 0) {
         self.kind = kind
         self.fixedX = position.x
+        self.entryStartX = entryStartX ?? position.x
+        self.entryDuration = entryDuration
         self.horizontalDirection = horizontalDirection
         self.visualNode = EncounterNode.makeVisualNode(for: kind)
         super.init()
@@ -56,7 +65,14 @@ final class EncounterNode: SKNode {
         case .patrolOfficer:
             position.x = fixedX
         case .thief:
-            position.x = fixedX
+            if entryElapsedTime < entryDuration {
+                entryElapsedTime = min(entryDuration, entryElapsedTime + deltaTime)
+                let progress = entryDuration == 0 ? 1 : entryElapsedTime / entryDuration
+                position.x = entryStartX + (fixedX - entryStartX) * CGFloat(progress)
+                position.y -= GameConstants.automaticScrollSpeed * CGFloat(deltaTime)
+            } else {
+                position.x = fixedX
+            }
         case .pidgeot:
             position.x += GameConstants.pidgeotSpeed * horizontalDirection * CGFloat(deltaTime)
             position.y += GameConstants.pidgeotVerticalSpeed * CGFloat(deltaTime)
@@ -86,7 +102,7 @@ final class EncounterNode: SKNode {
     }
 
     func shouldThrowProjectile(deltaTime: TimeInterval) -> Bool {
-        guard projectileEffect != nil else { return false }
+        guard projectileEffect != nil, !isEntering else { return false }
         projectileTimer += deltaTime
 
         let interval: TimeInterval
@@ -105,6 +121,10 @@ final class EncounterNode: SKNode {
         projectileTimer = 0
         projectilesThrown += 1
         return true
+    }
+
+    var isEntering: Bool {
+        entryElapsedTime < entryDuration
     }
 
     private static func makeVisualNode(for kind: EncounterKind) -> SKShapeNode {

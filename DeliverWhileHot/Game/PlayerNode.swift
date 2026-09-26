@@ -14,6 +14,7 @@ enum PlayerAction {
     case riding
     case eating
     case hit
+    case throwing
 }
 
 final class PlayerNode: SKNode {
@@ -24,6 +25,10 @@ final class PlayerNode: SKNode {
 
     var isEating: Bool {
         actionState == .eating
+    }
+
+    var isThrowing: Bool {
+        actionState == .throwing
     }
 
     override init() {
@@ -66,6 +71,31 @@ final class PlayerNode: SKNode {
         updateAnimation()
     }
 
+    @discardableResult
+    func startThrowing(onRelease: @escaping () -> Void) -> Bool {
+        guard actionState == .riding else { return false }
+        actionState = .throwing
+        updateAnimation(onThrowRelease: onRelease)
+        return true
+    }
+
+    func playHealthRecoveryAnimation() {
+        let pulse = SKShapeNode(circleOfRadius: 18)
+        pulse.fillColor = SKColor.systemGreen.withAlphaComponent(0.18)
+        pulse.strokeColor = SKColor.systemGreen.withAlphaComponent(0.82)
+        pulse.lineWidth = 2.5
+        pulse.zPosition = 10
+        pulse.setScale(0.35)
+        addChild(pulse)
+
+        let expand = SKAction.scale(to: 1.9, duration: 0.42)
+        let fade = SKAction.fadeOut(withDuration: 0.42)
+        pulse.run(.sequence([
+            .group([expand, fade]),
+            .removeFromParent()
+        ]))
+    }
+
     func setMovement(horizontal: CGFloat, vertical: CGFloat) {
         let clampedHorizontal = max(-1, min(1, horizontal))
         let isMoving = abs(horizontal) > 0.01 || abs(vertical) > 0.01
@@ -97,7 +127,7 @@ final class PlayerNode: SKNode {
         spriteNode.run(feedback, withKey: "collisionFeedback")
     }
 
-    private func updateAnimation() {
+    private func updateAnimation(onThrowRelease: (() -> Void)? = nil) {
         spriteNode.removeAllActions()
 
         let textureName: String
@@ -121,6 +151,9 @@ final class PlayerNode: SKNode {
         case (.burning, .hit):
             textureName = "DeliverWhileHotPlayerHitBurning"
             frameCount = 5
+        case (.normal, .throwing), (.burning, .throwing):
+            textureName = "DeliverWhileHotPlayerMolotovThrow"
+            frameCount = 5
         }
 
         let sheet = SKTexture(imageNamed: textureName)
@@ -142,8 +175,30 @@ final class PlayerNode: SKNode {
                                  height: textureSize.height * scale)
         spriteNode.colorBlendFactor = 0
 
-        if actionState == .eating || actionState == .hit {
-            let frameDuration: TimeInterval = actionState == .hit ? 0.12 : 0.16
+        if actionState == .throwing {
+            let frameDuration = GameConstants.molotovThrowFrameDuration
+            let releaseAction = SKAction.run { onThrowRelease?() }
+            let animation = SKAction.sequence([
+                .animate(with: Array(frames.prefix(4)),
+                         timePerFrame: frameDuration,
+                         resize: false,
+                         restore: false),
+                releaseAction,
+                .animate(with: [frames[4]],
+                         timePerFrame: frameDuration,
+                         resize: false,
+                         restore: false),
+                .run { [weak self] in
+                    guard let self else { return }
+                    self.actionState = .riding
+                    self.updateAnimation()
+                }
+            ])
+            spriteNode.run(animation, withKey: "throwAnimation")
+        } else if actionState == .eating || actionState == .hit {
+            let frameDuration: TimeInterval = actionState == .hit
+                ? GameConstants.hitAnimationFrameDuration
+                : 0.16
             let animation = SKAction.animate(with: frames,
                                              timePerFrame: frameDuration,
                                              resize: false,

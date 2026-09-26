@@ -12,6 +12,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var player = PlayerNode()
     private var horizontalInput: CGFloat = 0
     private var verticalInput: CGFloat = 0
+    private var lastMovementDirection = CGVector(dx: 0, dy: 1)
     private var routeWidth: CGFloat = 0
     private var routeHeight: CGFloat = 0
     private var lastUpdateTime: TimeInterval?
@@ -19,6 +20,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var hasReachedDestination = false
     private var isConfigured = false
     private var elapsedStageTime: TimeInterval = 0
+    private var freezeRemaining: TimeInterval = 0
     private var didSpawnOfficer = false
     private var didSpawnThief = false
     private var didSpawnPidgeot = false
@@ -88,6 +90,14 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let deltaTime = min(currentTime - (lastUpdateTime ?? currentTime), 1.0 / 20.0)
         lastUpdateTime = currentTime
 
+        if freezeRemaining > 0 {
+            freezeRemaining = max(0, freezeRemaining - deltaTime)
+            if freezeRemaining == 0 {
+                endFreeze()
+            }
+            return
+        }
+
         GameRules.advanceTemperature(&gameState, by: deltaTime)
         if gameState.foodTemperature <= 0 {
             finish(with: .foodTooCold)
@@ -98,6 +108,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         updateWorldHazards(deltaTime: deltaTime)
         updatePatrolOfficer(deltaTime: deltaTime)
         updateEncounters(deltaTime: deltaTime)
+        updateMolotovProjectiles(deltaTime: deltaTime)
 
         worldNode.position.y -= GameConstants.automaticScrollSpeed * deltaTime
         if worldNode.position.y <= -routeHeight {
@@ -111,7 +122,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                                   sceneWidth: size.width)
         }
 
-        let movementMultiplier: CGFloat = player.isEating ? 0.45 : 1.0
+        let movementMultiplier: CGFloat = player.isThrowing ? 0 : (player.isEating ? 0.45 : 1.0)
         player.setMovement(horizontal: horizontalInput, vertical: verticalInput)
         player.position.x += horizontalInput * GameConstants.playerMovementSpeed * movementMultiplier * CGFloat(deltaTime)
         player.position.y += verticalInput * GameConstants.playerVerticalMovementSpeed * movementMultiplier * CGFloat(deltaTime)
@@ -138,6 +149,11 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         guard case .playing = gameState.phase else { return }
         horizontalInput = max(-1, min(1, horizontal))
         verticalInput = max(-1, min(1, vertical))
+        let magnitude = hypot(horizontalInput, verticalInput)
+        if magnitude > 0.12 {
+            lastMovementDirection = CGVector(dx: horizontalInput / magnitude,
+                                             dy: verticalInput / magnitude)
+        }
         player.setMovement(horizontal: horizontalInput, vertical: verticalInput)
     }
 
@@ -152,6 +168,33 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func stopPlayerVerticalMovement() {
         verticalInput = 0
+    }
+
+    func throwMolotov() {
+        guard case .playing = gameState.phase,
+              !player.isEating,
+              !player.isThrowing else { return }
+
+        let direction = lastMovementDirection
+        _ = player.startThrowing { [weak self] in
+            guard let self else { return }
+            let startPosition = CGPoint(
+                x: self.player.position.x + direction.dx * 42,
+                y: self.player.position.y + direction.dy * 42
+            )
+            let velocity = CGVector(
+                dx: direction.dx * GameConstants.molotovProjectileSpeed,
+                dy: direction.dy * GameConstants.molotovProjectileSpeed
+            )
+            self.encounterNodeLayer.addChild(
+                MolotovProjectileNode(position: startPosition, velocity: velocity)
+            )
+        }
+    }
+
+    var canThrowMolotov: Bool {
+        guard case .playing = gameState.phase else { return false }
+        return !player.isEating && !player.isThrowing
     }
 
     private func checkSceneInteractions(at time: TimeInterval) {
@@ -234,6 +277,56 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
 
+        for molotov in encounterNodeLayer.children.compactMap({ $0 as? MolotovProjectileNode }) {
+            var didImpact = false
+
+            for hazard in worldNode.children.compactMap({ $0 as? HazardNode }) {
+                let hazardCenter = CGPoint(x: hazard.position.x + worldNode.position.x,
+                                           y: hazard.position.y + worldNode.position.y)
+                let horizontalDistance = abs(molotov.position.x - hazardCenter.x)
+                let verticalDistance = abs(molotov.position.y - hazardCenter.y)
+                let hazardHalfWidth = hazard.definition.size.width / 2
+                let hazardHalfHeight = hazard.definition.size.height / 2
+
+                if horizontalDistance <= hazardHalfWidth + 14 &&
+                    verticalDistance <= hazardHalfHeight + 14 {
+                    hazard.removeFromParent()
+                    didImpact = true
+                    break
+                }
+            }
+
+            if didImpact {
+                explodeMolotov(at: molotov.position)
+                molotov.removeFromParent()
+                continue
+            }
+
+            for encounter in encounterNodeLayer.children.compactMap({ $0 as? EncounterNode }) {
+                guard encounter.kind == .thief || encounter.kind == .pidgeot else { continue }
+                let horizontalDistance = abs(molotov.position.x - encounter.position.x)
+                let verticalDistance = abs(molotov.position.y - encounter.position.y)
+                if horizontalDistance <= 42 && verticalDistance <= 42 {
+                    encounter.removeFromParent()
+                    molotov.removeFromParent()
+                    explodeMolotov(at: molotov.position)
+                    didImpact = true
+                    break
+                }
+            }
+
+            if didImpact { continue }
+
+            let leftWall = size.width / 2 - routeWidth / 2
+            let rightWall = size.width / 2 + routeWidth / 2
+            let reachedWall = molotov.position.x <= leftWall + 8 ||
+                molotov.position.x >= rightWall - 8
+            if reachedWall {
+                molotov.removeFromParent()
+                explodeMolotov(at: molotov.position)
+            }
+        }
+
         guard let destination = worldNode.childNode(withName: "destination") else { return }
         let destinationCenter = destination.convert(CGPoint.zero, to: self)
         let destinationHalfWidth = (routeWidth - 36) / 2
@@ -262,7 +355,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func handleObstacleContact(at time: TimeInterval,
                                       startsBurning: Bool = false,
                                       hazardKind: HazardKind? = nil) {
-        guard time - lastCollisionTime >= GameConstants.collisionCooldown else { return }
+        guard time - lastCollisionTime >= GameConstants.hitInvincibilityDuration else { return }
         lastCollisionTime = time
 
         if startsBurning {
@@ -277,6 +370,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             run(.playSoundFileNamed(hitSoundName, waitForCompletion: false),
                 withKey: "hitSound")
         }
+        beginFreeze(for: GameConstants.hitStopDuration)
         GameRules.applyObstacleDamage(&gameState)
         if gameState.health <= 0 {
             finish(with: .healthDepleted)
@@ -303,6 +397,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func handleBonusCollection(_ bonus: BonusNode) {
         guard case .playing = gameState.phase else { return }
         bonus.removeFromParent()
+        beginFreeze(for: GameConstants.bonusStopDuration)
         run(.playSoundFileNamed(GameConstants.bonusPickupSoundName,
                                 waitForCompletion: false))
 
@@ -330,6 +425,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         run(.playSoundFileNamed(GameConstants.healthRecoverySoundName,
                                 waitForCompletion: false),
             withKey: "healthRecoverySound")
+        player.playHealthRecoveryAnimation()
         if player.startEating() {
             publishState()
         }
@@ -348,6 +444,26 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             .playSoundFileNamed(GameConstants.molotovExplosionSoundName,
                                 waitForCompletion: false)
         ]))
+    }
+
+    private func explodeMolotov(at position: CGPoint) {
+        encounterNodeLayer.addChild(MolotovExplosionNode(position: position))
+        playMolotovImpactSound()
+    }
+
+    private func beginFreeze(for duration: TimeInterval) {
+        freezeRemaining = max(freezeRemaining, duration)
+        worldNode.speed = 0
+        encounterNodeLayer.speed = 0
+        player.speed = 0
+        physicsWorld.speed = 0
+    }
+
+    private func endFreeze() {
+        worldNode.speed = 1
+        encounterNodeLayer.speed = 1
+        player.speed = 1
+        physicsWorld.speed = 1
     }
 
     var isEating: Bool {
@@ -379,9 +495,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             let thiefX = thiefOnLeft
                 ? size.width / 2 - routeWidth / 2 + thiefHalfWidth + sideInset
                 : size.width / 2 + routeWidth / 2 - thiefHalfWidth - sideInset
+            let entryStartX = thiefOnLeft ? -thiefHalfWidth - 24 : size.width + thiefHalfWidth + 24
             let thief = EncounterNode(kind: .thief,
                                       position: CGPoint(x: thiefX,
-                                                        y: player.position.y))
+                                                        y: size.height - GameConstants.topTouchExclusionHeight - 50),
+                                      entryStartX: entryStartX,
+                                      entryDuration: GameConstants.sideHazardEntryDuration)
             encounterNodeLayer.addChild(thief)
             run(.playSoundFileNamed(GameConstants.dangerSoundName,
                                     waitForCompletion: false))
@@ -442,6 +561,19 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 projectile.position.y < -60 || projectile.position.y > size.height + 60
             if hasReachedTarget || isOffscreen {
                 projectile.removeFromParent()
+            }
+        }
+    }
+
+    private func updateMolotovProjectiles(deltaTime: TimeInterval) {
+        for molotov in encounterNodeLayer.children.compactMap({ $0 as? MolotovProjectileNode }) {
+            molotov.updateMovement(deltaTime: deltaTime)
+            let isOffscreen = molotov.position.x < -100 ||
+                molotov.position.x > size.width + 100 ||
+                molotov.position.y < -100 ||
+                molotov.position.y > size.height + 100
+            if isOffscreen {
+                molotov.removeFromParent()
             }
         }
     }
