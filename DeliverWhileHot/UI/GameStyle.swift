@@ -6,11 +6,14 @@
 import SwiftUI
 
 enum GameStyle {
-    static let accent = Color(red: 1.0, green: 0.32, blue: 0.08)
+    static let accent = Color(red: 1.0, green: 0.22, blue: 0.08)
     static let panel = Color.black.opacity(0.78)
-    static let displayFont = Font.system(size: 24, weight: .black, design: .rounded)
-    static let buttonFont = Font.system(size: 16, weight: .black, design: .rounded)
-    static let bodyFont = Font.system(size: 17, weight: .regular, design: .rounded)
+    static let cream = Color(red: 0.94, green: 0.87, blue: 0.72)
+    static let displayFont = Font.custom("NewRocker-Regular", size: 24)
+    static let primaryButtonFont = Font.custom("SpecialElite-Regular", size: 24)
+    static let secondaryButtonFont = Font.custom("SpecialElite-Regular", size: 13)
+    static let bodyFont = Font.custom("SyneMono-Regular", size: 17)
+    static let secondaryFont = Font.custom("SyneMono-Regular", size: 12)
 }
 
 struct GameMenuButtonStyle: ButtonStyle {
@@ -18,23 +21,21 @@ struct GameMenuButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(GameStyle.buttonFont)
-            .foregroundStyle(.white)
+            .foregroundStyle(GameStyle.cream)
+            .lineLimit(1)
+            .minimumScaleFactor(0.72)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
-            .background(
-                filled ? GameStyle.accent : GameStyle.panel,
-                in: RoundedRectangle(cornerRadius: 12)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        filled ? .white.opacity(0.25) : .white.opacity(0.7),
-                        lineWidth: 1
-                    )
+            .frame(height: filled ? 62 : 60)
+            .padding(.horizontal, filled ? 22 : 18)
+            .background {
+                Image(filled ? "DeliverWhileHotMenuButtonPrimary" : "DeliverWhileHotMenuButtonSecondary")
+                    .resizable()
+                    .scaledToFill()
+                    .accessibilityHidden(true)
             }
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .opacity(configuration.isPressed ? 0.82 : 1)
+            .scaleEffect(configuration.isPressed ? 0.965 : 1)
+            .brightness(configuration.isPressed ? 0.06 : 0)
+            .opacity(configuration.isPressed ? 0.92 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }

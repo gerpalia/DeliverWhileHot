@@ -40,6 +40,7 @@ final class PlayerNode: SKNode {
         physicsBody = body
 
         addChild(spriteNode)
+        spriteNode.zRotation = .pi
         updateAnimation()
     }
 
@@ -133,8 +134,6 @@ final class PlayerNode: SKNode {
         }
 
         spriteNode.texture = frames.first
-        spriteNode.zRotation = .pi
-        targetAngle = .pi
         let textureSize = frames[0].size()
         let maximumDimension: CGFloat = 112
         let scale = min(maximumDimension / textureSize.width,

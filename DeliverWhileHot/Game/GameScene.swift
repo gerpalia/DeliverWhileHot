@@ -170,7 +170,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 verticalDistance <= playerHalfHeight + hazardHalfHeight
 
             if isOverlapping {
-                handleObstacleContact(at: time)
+                handleObstacleContact(at: time, hazardKind: hazard.definition.kind)
                 break
             }
         }
@@ -226,6 +226,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 projectile.removeFromParent()
                 switch projectile.effect {
                 case .damageHealth:
+                    playMolotovImpactSound()
                     handleObstacleContact(at: time, startsBurning: true)
                 case .spoilFood:
                     handlePidgeotMess(at: time)
@@ -258,14 +259,24 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         player.position.x = min(safeX, size.width / 2 + halfRoad)
     }
 
-    private func handleObstacleContact(at time: TimeInterval, startsBurning: Bool = false) {
+    private func handleObstacleContact(at time: TimeInterval,
+                                      startsBurning: Bool = false,
+                                      hazardKind: HazardKind? = nil) {
         guard time - lastCollisionTime >= GameConstants.collisionCooldown else { return }
         lastCollisionTime = time
 
         if startsBurning {
             player.setBurning(true)
         }
+        if let hazardKind, hazardKind == .cat {
+            run(.playSoundFileNamed(GameConstants.catAttackSoundName,
+                                    waitForCompletion: false))
+        }
         player.playHitAnimation()
+        if let hitSoundName = GameConstants.hitSoundNames.randomElement() {
+            run(.playSoundFileNamed(hitSoundName, waitForCompletion: false),
+                withKey: "hitSound")
+        }
         GameRules.applyObstacleDamage(&gameState)
         if gameState.health <= 0 {
             finish(with: .healthDepleted)
@@ -292,18 +303,22 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func handleBonusCollection(_ bonus: BonusNode) {
         guard case .playing = gameState.phase else { return }
         bonus.removeFromParent()
+        run(.playSoundFileNamed(GameConstants.bonusPickupSoundName,
+                                waitForCompletion: false))
 
         switch bonus.kind {
         case .food:
             GameRules.applyFoodBonus(&gameState)
         case .fire:
             GameRules.applyFireBonus(&gameState)
+            playBuffSound()
             if gameState.health <= 0 {
                 finish(with: .healthDepleted)
                 return
             }
         case .water:
             player.setBurning(false)
+            playBuffSound()
         }
 
         publishState()
@@ -312,9 +327,27 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     func consumeFood() {
         guard case .playing = gameState.phase else { return }
         guard GameRules.consumeFood(&gameState) else { return }
+        run(.playSoundFileNamed(GameConstants.healthRecoverySoundName,
+                                waitForCompletion: false),
+            withKey: "healthRecoverySound")
         if player.startEating() {
             publishState()
         }
+    }
+
+    private func playBuffSound() {
+        run(.playSoundFileNamed(GameConstants.buffShineSoundName,
+                                waitForCompletion: false))
+    }
+
+    private func playMolotovImpactSound() {
+        run(.sequence([
+            .playSoundFileNamed(GameConstants.molotovGlassSoundName,
+                                waitForCompletion: false),
+            .wait(forDuration: 0.08),
+            .playSoundFileNamed(GameConstants.molotovExplosionSoundName,
+                                waitForCompletion: false)
+        ]))
     }
 
     var isEating: Bool {
@@ -350,6 +383,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                                       position: CGPoint(x: thiefX,
                                                         y: player.position.y))
             encounterNodeLayer.addChild(thief)
+            run(.playSoundFileNamed(GameConstants.dangerSoundName,
+                                    waitForCompletion: false))
         }
 
         if !didSpawnPidgeot, elapsedStageTime >= GameConstants.pidgeotSpawnTime {
@@ -449,6 +484,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             let spawnY = size.height - GameConstants.topTouchExclusionHeight + 90 - worldNode.position.y
             let position = CGPoint(x: size.width / 2 + routeWidth * offset, y: spawnY)
             worldNode.addChild(nodeFactory.makeHazard(definition: definition, position: position))
+            switch definition.kind {
+            case .cat:
+                run(.playSoundFileNamed(GameConstants.catSpawnSoundName,
+                                        waitForCompletion: false))
+            case .cow:
+                run(.playSoundFileNamed(GameConstants.cowSpawnSoundName,
+                                        waitForCompletion: false))
+            case .thief:
+                break
+            }
             hazardSpawnIndex += 1
         }
 

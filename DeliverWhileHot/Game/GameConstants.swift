@@ -39,6 +39,20 @@ enum GameConstants {
     static let pidgeotVerticalSpeed: CGFloat = 8
     static let pidgeotProjectileInterval: TimeInterval = 0.55
     static let hazardSpawnInterval: TimeInterval = 1.8
+    static let hitSoundNames = [
+        "hit_yelp_01.wav",
+        "hit_yelp_02.wav",
+        "hit_yelp_03.wav"
+    ]
+    static let bonusPickupSoundName = "bonus_pickup.wav"
+    static let buffShineSoundName = "buff_shine.wav"
+    static let healthRecoverySoundName = "health_recovery.caf"
+    static let catSpawnSoundName = "cat_spawn.wav"
+    static let catAttackSoundName = "cat_attack.wav"
+    static let cowSpawnSoundName = "cow_moo.wav"
+    static let dangerSoundName = "danger_sting.wav"
+    static let molotovGlassSoundName = "molotov_glass.wav"
+    static let molotovExplosionSoundName = "molotov_explosion.wav"
 
     static let obstacleRadius: CGFloat = 28
     static let destinationHeight: CGFloat = 96

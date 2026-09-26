@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var gameState = GameState()
     @State private var endReason: GameEndReason?
     @State private var sceneID = UUID()
+    @StateObject private var stageMusic = BackgroundMusicPlayer()
 
     var body: some View {
         GeometryReader { geometry in
@@ -42,7 +43,11 @@ struct ContentView: View {
                 }
             }
             .onAppear {
+                stageMusic.play(resourceName: "kulakovka-epic-beat-278463.mp3", volume: 0.22)
                 startGame(in: geometry.size)
+            }
+            .onDisappear {
+                stageMusic.stop()
             }
         }
     }

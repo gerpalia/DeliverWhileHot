@@ -8,6 +8,7 @@ import SwiftUI
 struct StartView: View {
     @State private var isGameStarted = false
     @State private var presentedPage: MenuPage?
+    @StateObject private var menuMusic = BackgroundMusicPlayer()
 
     var body: some View {
         Group {
@@ -19,6 +20,12 @@ struct StartView: View {
         }
         .sheet(item: $presentedPage) { page in
             MenuInformationView(page: page)
+        }
+        .onAppear {
+            menuMusic.play(resourceName: "aliabbasabasov-epic-heavy-type-beat-rap-instrumental-prod5xbeatz-524490.mp3", volume: 0.32)
+        }
+        .onDisappear {
+            menuMusic.stop()
         }
     }
 
@@ -46,9 +53,12 @@ struct StartView: View {
                     Spacer()
 
                     Button {
+                        menuMusic.stop()
                         isGameStarted = true
                     } label: {
                         Text("menu.new_game")
+                            .font(GameStyle.primaryButtonFont)
+                            .fontWeight(.bold)
                     }
                     .buttonStyle(GameMenuButtonStyle(filled: true))
 
@@ -69,6 +79,7 @@ struct StartView: View {
             presentedPage = page
         } label: {
             Text(titleKey)
+                .font(GameStyle.secondaryButtonFont)
         }
         .buttonStyle(GameMenuButtonStyle())
     }
