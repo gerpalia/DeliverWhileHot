@@ -24,13 +24,13 @@ struct GameControlsView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     CommandButton(title: "controls.eat",
-                                  symbol: "🍕",
+                                  symbol: "takeoutbag.and.cup.and.straw",
                                   isEnabled: canEat,
                                   action: onEat,
                                   imageName: "DeliverWhileHotEatingIcon",
                                   cooldownProgress: eatCooldownProgress)
                     CommandButton(title: "controls.block",
-                                  symbol: "🛡️",
+                                  symbol: "shield.fill",
                                   isEnabled: true,
                                   action: {},
                                   imageName: "DeliverWhileHotBlockIcon",
@@ -38,12 +38,12 @@ struct GameControlsView: View {
                 }
                 HStack(spacing: 8) {
                     CommandButton(title: "controls.molotov",
-                                  symbol: "🔥",
+                                  symbol: "flame.fill",
                                   isEnabled: canThrowMolotov,
                                   action: onThrowMolotov,
                                   imageName: "DeliverWhileHotMolotovActionIcon",
                                   cooldownProgress: molotovCooldownProgress)
-                    CommandButton(title: "controls.item", symbol: "🎒", isEnabled: false, action: {})
+                    CommandButton(title: "controls.item", symbol: "backpack.fill", isEnabled: false, action: {})
                 }
             }
         }
@@ -148,8 +148,8 @@ private struct CommandButton: View {
                         .scaledToFit()
                         .padding(imageName == "DeliverWhileHotMolotovActionIcon" ? 4 : 6)
                 } else {
-                    Text(symbol)
-                        .font(.system(size: 28))
+                    Image(systemName: symbol)
+                        .font(.system(size: 25, weight: .semibold))
                 }
             }
             .frame(width: 58, height: 58)

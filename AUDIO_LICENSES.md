@@ -8,7 +8,7 @@ Licensing is not verified by the filenames alone. Before distribution, record th
 | --- | --- | --- | --- |
 | `molotov_glass.wav` | `11325622-glass-breaking-sound-effect-240679.mp3` | Trimmed, normalized, mono WAV | Verify source license |
 | `molotov_explosion.wav` | `dragon-studio-explosion-effect-494317.mp3` | Trimmed, normalized, mono WAV | Verify source license |
-| `player_scream.wav` | `universfield-male-scream-121085.mp3` | Trimmed to a short reaction, normalized, mono WAV | Verify source license |
+| `player_scream_extended.wav` | `universfield-male-scream-121085.mp3` | Trimmed, normalized, then gently time-stretched to 0.90× tempo as mono WAV; original processed `player_scream.wav` retained for rollback | Verify source license |
 | `cat_attack.wav` | `cartoon_music-angry-cat-meow-513483.mp3` | Trimmed, normalized, mono WAV | Verify source license |
 | `cat_spawn.wav` | `freesound_community-cat-call-meow-102607.mp3` | Silence-trimmed, normalized, mono WAV | Verify source license |
 | `danger_sting.wav` | `soundreality-danger-203290.mp3` | Extracted short candidate, normalized, mono WAV | Verify source license |

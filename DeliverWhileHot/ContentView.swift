@@ -11,6 +11,9 @@ struct ContentView: View {
     @State private var scene = GameScene()
     @State private var gameState = GameState()
     @State private var endReason: GameEndReason?
+    @State private var endingSequenceStarted = false
+    @State private var endingPromptStep: EndingPromptStep?
+    @State private var endingPromptProgress: CGFloat = 0.5
     @State private var sceneID = UUID()
     @StateObject private var stageMusic = BackgroundMusicPlayer()
 
@@ -25,7 +28,7 @@ struct ContentView: View {
                     GameHUDView(state: gameState,
                                 molotovCount: scene.availableMolotovs)
                     Spacer()
-                    if endReason == nil {
+                    if endReason == nil && !endingSequenceStarted {
                         GameControlsView(
                             canEat: scene.canEat,
                             eatCooldownProgress: scene.eatCooldownProgress,
@@ -41,6 +44,13 @@ struct ContentView: View {
                             }
                         )
                     }
+                }
+
+                if let endingPromptStep {
+                    EndingPromptView(step: endingPromptStep,
+                                     progress: endingPromptProgress,
+                                     onTap: { scene.submitEndingPromptTap() })
+                    .transition(.opacity)
                 }
 
                 if let endReason {
@@ -69,6 +79,9 @@ struct ContentView: View {
     private func startGame(in size: CGSize) {
         gameState = GameState()
         endReason = nil
+        endingSequenceStarted = false
+        endingPromptStep = nil
+        endingPromptProgress = 0.5
         scene = GameScene()
         sceneID = UUID()
         scene.configure(for: size,
@@ -77,6 +90,13 @@ struct ContentView: View {
                         },
                         onFinished: { reason in
                             endReason = reason
+                        },
+                        onEndingPromptChanged: { step, progress in
+                            if step != nil {
+                                endingSequenceStarted = true
+                            }
+                            endingPromptStep = step
+                            endingPromptProgress = progress
                         })
     }
 }

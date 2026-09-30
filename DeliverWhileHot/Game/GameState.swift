@@ -25,4 +25,5 @@ enum GameEndReason: Equatable {
     case healthDepleted
     case foodTooCold
     case insufficientFood
+    case crashedAtDestination
 }

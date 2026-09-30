@@ -10,30 +10,32 @@ struct GameHUDView: View {
     let molotovCount: Int
 
     var body: some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 8) {
+        VStack(spacing: 7) {
+            HStack(spacing: 7) {
                 StatCapsule {
-                    HStack(spacing: 2) {
+                    HStack(spacing: 6) {
                         ForEach(0..<GameState.maximumHealth, id: \.self) { index in
-                            Text("♥")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(index < state.health ? .red : .white.opacity(0.22))
-                                .frame(width: 24, height: 24)
+                            Image(systemName: "heart.fill")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundStyle(index < state.health ? Color(red: 0.88, green: 0.24, blue: 0.22) : .white.opacity(0.22))
+                                .frame(width: 20, height: 22)
                         }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Health: \(state.health) of \(GameState.maximumHealth)")
                 }
 
                 StatCapsule {
-                    HStack(spacing: 2) {
+                    HStack(spacing: 5) {
                         ForEach(0..<4, id: \.self) { index in
                             let isAvailable = state.foodRemaining >= Double(index + 1) / 4
-                            Text("🍕")
-                                .font(.system(size: 18))
-                                .opacity(isAvailable ? 1 : 0.18)
-                                .blur(radius: isAvailable ? 0 : 2)
-                                .frame(width: 24, height: 24)
+                            PizzaSliceIcon()
+                                .frame(width: 19, height: 22)
+                                .opacity(isAvailable ? 1 : 0.20)
                         }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Food: \(Int((state.foodRemaining * 4).rounded(.down))) of 4 slices")
                 }
 
                 StatCapsule {
@@ -44,69 +46,143 @@ struct GameHUDView: View {
                                   : "DeliverWhileHotMolotovEmpty")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 24, height: 24)
-                                .opacity(index < molotovCount ? 1 : 0.65)
+                                .frame(width: 17, height: 24)
+                                .opacity(index < molotovCount ? 1 : 0.52)
                         }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Molotovs: \(molotovCount) of \(GameConstants.maximumMolotovCount)")
                 }
             }
 
             TemperatureBar(value: state.foodTemperature)
-
+                .padding(.horizontal, 1)
         }
         .padding(.horizontal, 10)
-        .padding(.top, 5)
-        .padding(.bottom, 6)
-        .background(.black.opacity(0.55))
+        .padding(.top, 6)
+        .padding(.bottom, 7)
+        .background(.black.opacity(0.48))
         .foregroundStyle(.white)
     }
-}
 
-private struct StatCapsule<Content: View>: View {
-    @ViewBuilder let content: () -> Content
+    private struct StatCapsule<Content: View>: View {
+        @ViewBuilder let content: () -> Content
 
-    var body: some View {
-        content()
-            .padding(.horizontal, 7)
-            .padding(.vertical, 5)
-            .background(
-                Color(red: 0.29, green: 0.31, blue: 0.37),
-                in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-            )
-            .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(.white.opacity(0.16), lineWidth: 1)
-            }
-    }
-}
-
-private struct TemperatureBar: View {
-    let value: Double
-
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                Capsule().fill(.white.opacity(0.28))
-                HStack(spacing: 0) {
-                    Capsule()
-                        .fill(temperatureColor)
-                        .frame(width: geometry.size.width * value)
-                    Spacer(minLength: 0)
+        var body: some View {
+            content()
+                .frame(maxWidth: .infinity)
+                .frame(height: 38)
+                .padding(.horizontal, 5)
+                .background(
+                    LinearGradient(colors: [
+                        Color(red: 0.20, green: 0.22, blue: 0.27),
+                        Color(red: 0.12, green: 0.14, blue: 0.18)
+                    ], startPoint: .top, endPoint: .bottom),
+                    in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(.white.opacity(0.19), lineWidth: 1)
                 }
-
-                HStack {
-                    Text("❄️")
-                    Spacer(minLength: 0)
-                    Text("🔥")
-                }
-                .font(.body)
-                .padding(.horizontal, 3)
-            }
         }
-        .frame(height: 24)
     }
 
-    private var temperatureColor: Color {
-        Color(red: 1, green: 1 - value, blue: 1 - value)
+    private struct TemperatureBar: View {
+        let value: Double
+
+        private var progress: CGFloat {
+            CGFloat(max(0, min(1, value)))
+        }
+
+        var body: some View {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(Color(red: 0.20, green: 0.22, blue: 0.27))
+
+                    Capsule()
+                        .fill(LinearGradient(colors: [
+                            Color(red: 0.72, green: 0.34, blue: 0.19),
+                            Color(red: 0.96, green: 0.24, blue: 0.18)
+                        ], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(0, geometry.size.width * progress))
+
+                    HStack {
+                        temperatureIcon(
+                            symbol: "snowflake",
+                            tint: Color(red: 0.72, green: 0.88, blue: 0.96)
+                        )
+                        Spacer(minLength: 0)
+                        temperatureIcon(
+                            symbol: "flame.fill",
+                            tint: Color(red: 1.0, green: 0.66, blue: 0.28)
+                        )
+                    }
+                    .padding(.horizontal, 3)
+                }
+                .overlay {
+                    Capsule().stroke(.white.opacity(0.20), lineWidth: 1)
+                }
+                .clipShape(Capsule())
+            }
+            .frame(height: 24)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Food temperature")
+            .accessibilityValue("\(Int(progress * 100)) percent")
+        }
+
+        private func temperatureIcon(symbol: String, tint: Color) -> some View {
+            Image(systemName: symbol)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(tint)
+                .frame(width: 21, height: 21)
+                .background(tint.opacity(0.16), in: Circle())
+                .overlay {
+                    Circle().stroke(tint.opacity(0.48), lineWidth: 0.8)
+                }
+                .shadow(color: tint.opacity(0.25), radius: 2)
+        }
+    }
+
+    private struct PizzaSliceIcon: View {
+        var body: some View {
+            GeometryReader { geometry in
+                let size = geometry.size
+                ZStack {
+                    PizzaSliceShape()
+                        .fill(Color(red: 0.96, green: 0.65, blue: 0.25))
+                    PizzaSliceShape()
+                        .stroke(Color(red: 0.43, green: 0.22, blue: 0.12), lineWidth: 1.2)
+                    Circle()
+                        .fill(Color(red: 0.72, green: 0.18, blue: 0.12))
+                        .frame(width: size.width * 0.19, height: size.width * 0.19)
+                        .position(x: size.width * 0.38, y: size.height * 0.38)
+                    Circle()
+                        .fill(Color(red: 0.72, green: 0.18, blue: 0.12))
+                        .frame(width: size.width * 0.19, height: size.width * 0.19)
+                        .position(x: size.width * 0.63, y: size.height * 0.52)
+                    Circle()
+                        .fill(Color(red: 0.72, green: 0.18, blue: 0.12))
+                        .frame(width: size.width * 0.19, height: size.width * 0.19)
+                        .position(x: size.width * 0.49, y: size.height * 0.70)
+                }
+            }
+            .accessibilityHidden(true)
+        }
+    }
+
+    private struct PizzaSliceShape: Shape {
+        func path(in rect: CGRect) -> Path {
+            var path = Path()
+            path.move(to: CGPoint(x: rect.minX + rect.width * 0.10,
+                                  y: rect.minY + rect.height * 0.20))
+            path.addQuadCurve(to: CGPoint(x: rect.maxX - rect.width * 0.10,
+                                          y: rect.minY + rect.height * 0.20),
+                              control: CGPoint(x: rect.midX,
+                                               y: rect.minY - rect.height * 0.02))
+            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY - rect.height * 0.04))
+            path.closeSubpath()
+            return path
+        }
     }
 }

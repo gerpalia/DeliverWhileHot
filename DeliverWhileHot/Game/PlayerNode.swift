@@ -105,20 +105,53 @@ final class PlayerNode: SKNode {
 
     func setMovement(horizontal: CGFloat, vertical: CGFloat) {
         let clampedHorizontal = max(-1, min(1, horizontal))
-        let isMoving = abs(horizontal) > 0.01 || abs(vertical) > 0.01
-        let tilt: CGFloat = isMoving ? -clampedHorizontal * 0.30 : 0
-        let requestedAngle = CGFloat.pi + tilt
+        let isMoving = hypot(horizontal, vertical) > 0.01
+        var facingHorizontal = clampedHorizontal
+        var facingVertical = max(-1, min(1, vertical))
+
+        // The road scrolls toward the rider, so backward input must not make
+        // the artwork face down-screen. Clamp its heading to the forward arc:
+        // 9 o'clock → 12 o'clock → 3 o'clock.
+        if facingVertical < 0 {
+            if abs(facingHorizontal) > 0.01 {
+                facingVertical = 0
+            } else {
+                facingHorizontal = 0
+                facingVertical = 1
+            }
+        }
+
+        // The artwork faces up when zRotation is π. Rotate the whole rider
+        // toward the joystick direction instead of applying only a small bank.
+        let requestedAngle = isMoving
+            ? atan2(facingVertical, facingHorizontal) + .pi / 2
+            : CGFloat.pi
         guard abs(requestedAngle - targetAngle) > 0.001 else { return }
         targetAngle = requestedAngle
 
         spriteNode.run(.rotate(toAngle: requestedAngle,
-                               duration: 0.08,
+                               duration: 0.09,
                                shortestUnitArc: true),
                        withKey: "movementTilt")
     }
 
     func stopAnimations() {
         spriteNode.removeAllActions()
+    }
+
+    func playEndingPreparation() {
+        spriteNode.removeAction(forKey: "endingPreparation")
+        let crouch = SKAction.group([
+            .scaleY(to: 0.84, duration: 0.12),
+            .moveBy(x: 0, y: -4, duration: 0.12)
+        ])
+        crouch.timingMode = .easeOut
+        let recover = SKAction.group([
+            .scaleY(to: 1, duration: 0.20),
+            .moveBy(x: 0, y: 4, duration: 0.20)
+        ])
+        recover.timingMode = .easeInEaseOut
+        spriteNode.run(.sequence([crouch, recover]), withKey: "endingPreparation")
     }
 
     func showCollisionFeedback() {

@@ -11,14 +11,16 @@ enum GameConstants {
 
     static let targetStageDuration: TimeInterval = 20
     static let minimumRouteHeight: CGFloat = 4_000
-    static let routeWidthRatio: CGFloat = 0.82
+    static let routeWidthRatio: CGFloat = 0.60
+    static let sidewalkWidthRatio: CGFloat = 0.10
+    static let navigableWidthRatio: CGFloat = 0.80
     static let maximumRouteWidth: CGFloat = 420
 
     static let playerSize = CGSize(width: 44, height: 58)
     static let playerCornerRadius: CGFloat = 10
     static let playerStartHeight: CGFloat = 120
-    static let movementSmoothing: CGFloat = 0.16
-    static let playerMovementSpeed: CGFloat = 280
+    static let movementSmoothing: TimeInterval = 0.09
+    static let playerMovementSpeed: CGFloat = 320
     static let playerVerticalMovementSpeed: CGFloat = 220
     static let automaticScrollSpeed: CGFloat = 150
     static let topTouchExclusionHeight: CGFloat = 150
@@ -27,7 +29,7 @@ enum GameConstants {
     static let joystickSafeZoneTopEdge: CGFloat = 135
     static let collisionFeedbackDuration: TimeInterval = 0.18
     static let collisionCooldown: TimeInterval = 0.75
-    static let hitInvincibilityDuration: TimeInterval = 1.0
+    static let hitInvincibilityDuration: TimeInterval = 1.5
     static let hitAnimationFrameDuration: TimeInterval = 0.16
     static let hitStopDuration: TimeInterval = 0.28
     static let bonusStopDuration: TimeInterval = 0.16
@@ -45,21 +47,18 @@ enum GameConstants {
     static let officerSpawnTime: TimeInterval = 5
     static let officerDuration: TimeInterval = 5
     static let thiefSpawnTime: TimeInterval = 14
-    static let thiefDuration: TimeInterval = 4
+    static let thiefWarningDuration: TimeInterval = 0.46
+    static let thiefKnifeSpeed: CGFloat = 360
+    static let thiefMolotovSpeed: CGFloat = 260
     static let sideHazardEntryDuration: TimeInterval = 3
     static let pidgeotSpawnTime: TimeInterval = 9
-    static let pidgeotDuration: TimeInterval = 5.2
     static let projectileSpeed: CGFloat = 280
     static let projectileInterval: TimeInterval = 1.1
     static let pidgeotSpeed: CGFloat = 170
     static let pidgeotVerticalSpeed: CGFloat = 8
     static let pidgeotProjectileInterval: TimeInterval = 0.55
     static let hazardSpawnInterval: TimeInterval = 1.8
-    static let hitSoundNames = [
-        "hit_yelp_01.wav",
-        "hit_yelp_02.wav",
-        "hit_yelp_03.wav"
-    ]
+    static let hitSoundName = "player_scream_extended.wav"
     static let bonusPickupSoundName = "bonus_pickup.wav"
     static let buffShineSoundName = "buff_shine.wav"
     static let healthRecoverySoundName = "health_recovery.caf"
@@ -78,6 +77,8 @@ enum GameConstants {
 
     static let routeColor = SKColor(red: 0.10, green: 0.12, blue: 0.18, alpha: 1)
     static let roadColor = SKColor(red: 0.22, green: 0.24, blue: 0.30, alpha: 1)
+    static let frontageColor = SKColor(red: 0.09, green: 0.10, blue: 0.13, alpha: 1)
+    static let sidewalkColor = SKColor(red: 0.25, green: 0.26, blue: 0.29, alpha: 1)
     static let playerColor = SKColor(red: 0.25, green: 0.85, blue: 0.95, alpha: 1)
     static let obstacleColor = SKColor(red: 0.95, green: 0.30, blue: 0.25, alpha: 1)
     static let destinationColor = SKColor(red: 0.35, green: 0.95, blue: 0.45, alpha: 1)

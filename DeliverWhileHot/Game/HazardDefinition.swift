@@ -8,12 +8,13 @@ import SpriteKit
 enum HazardKind {
     case cat
     case cow
-    case thief
 }
 
 enum HazardMovement {
     case stationary
     case drifting(amplitude: CGFloat, frequency: CGFloat)
+    case crossing(speed: CGFloat)
+    case pounce(upwardDistance: CGFloat, waitDuration: TimeInterval, duration: TimeInterval)
 }
 
 enum HazardCollisionShape {
@@ -38,7 +39,7 @@ extension HazardDefinition {
         size: CGSize(width: 38, height: 38),
         collisionShape: .circle(radius: 19),
         damage: 1,
-        movement: .drifting(amplitude: 45, frequency: 2.4),
+        movement: .pounce(upwardDistance: 150, waitDuration: 0.85, duration: 0.66),
         color: .systemYellow
     )
 
@@ -48,17 +49,8 @@ extension HazardDefinition {
         size: CGSize(width: 110, height: 82),
         collisionShape: .rectangle(size: CGSize(width: 110, height: 82)),
         damage: 1,
-        movement: .drifting(amplitude: 55, frequency: 0.8),
+        movement: .crossing(speed: 100),
         color: .systemBrown
     )
 
-    static let thief = HazardDefinition(
-        kind: .thief,
-        displayName: "THIEF",
-        size: CGSize(width: 58, height: 72),
-        collisionShape: .rectangle(size: CGSize(width: 58, height: 72)),
-        damage: 1,
-        movement: .stationary,
-        color: .systemPurple
-    )
 }

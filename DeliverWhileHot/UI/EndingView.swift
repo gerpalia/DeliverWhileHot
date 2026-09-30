@@ -15,6 +15,7 @@ struct EndingView: View {
         case .healthDepleted: return String(localized: "ending.health_depleted.title")
         case .foodTooCold: return String(localized: "ending.food_too_cold.title")
         case .insufficientFood: return String(localized: "ending.insufficient_food.title")
+        case .crashedAtDestination: return String(localized: "ending.crashed.title")
         }
     }
 
@@ -24,6 +25,7 @@ struct EndingView: View {
         case .healthDepleted: return String(localized: "ending.health_depleted.message")
         case .foodTooCold: return String(localized: "ending.food_too_cold.message")
         case .insufficientFood: return String(localized: "ending.insufficient_food.message")
+        case .crashedAtDestination: return String(localized: "ending.crashed.message")
         }
     }
 
