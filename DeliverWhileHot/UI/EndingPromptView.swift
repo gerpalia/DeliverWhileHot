@@ -48,7 +48,8 @@ struct EndingPromptView: View {
                                 .fontWeight(.bold)
                                 .foregroundStyle(Color(red: 0.96, green: 0.88, blue: 0.72))
                                 .multilineTextAlignment(.center)
-                                .minimumScaleFactor(0.75)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.52)
                                 .padding(.horizontal, 9)
                         }
                 }
@@ -73,6 +74,7 @@ struct EndingPromptView: View {
         }
         .shadow(color: .black.opacity(0.55), radius: 24, y: 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .offset(y: 118)
         .background(Color.black.opacity(0.18).ignoresSafeArea())
     }
 
@@ -81,13 +83,13 @@ struct EndingPromptView: View {
             Circle().stroke(Color.white.opacity(0.20), lineWidth: 8)
 
             Circle()
-                .trim(from: 0, to: 0.14)
+                .trim(from: 0, to: 0.08)
                 .stroke(Color(red: 0.98, green: 0.72, blue: 0.32),
                         style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))
 
             Circle()
-                .trim(from: 0.86, to: 1)
+                .trim(from: 0.92, to: 1)
                 .stroke(Color(red: 0.98, green: 0.72, blue: 0.32),
                         style: StrokeStyle(lineWidth: 8, lineCap: .round))
                 .rotationEffect(.degrees(-90))

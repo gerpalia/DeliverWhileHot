@@ -102,12 +102,16 @@ final class HazardNode: SKNode {
                 catPhase = .warning
                 catPhaseTime = 0
                 warningNode?.isHidden = false
+                run(.playSoundFileNamed(GameConstants.catSpawnSoundName,
+                                        waitForCompletion: false))
             case .warning:
                 guard catPhaseTime >= waitDuration else { return }
                 catPhase = .pouncing
                 catPhaseTime = 0
                 warningNode?.isHidden = true
                 playCatPounceAnimation(duration: duration)
+                run(.playSoundFileNamed(GameConstants.catAttackSoundName,
+                                        waitForCompletion: false))
             case .pouncing:
                 let progress = min(1, CGFloat(catPhaseTime / duration))
                 let easedProgress = 1 - (1 - progress) * (1 - progress)
@@ -185,8 +189,8 @@ final class HazardNode: SKNode {
             node.strokeColor = .clear
             let frames = GameSpriteSheet.catFrames
             let sprite = SKSpriteNode(texture: frames[0])
-            sprite.size = CGSize(width: GameConstants.playerSize.width * 0.68,
-                                 height: GameConstants.playerSize.height * 0.69)
+            sprite.size = CGSize(width: GameConstants.playerSize.width * 0.78,
+                                 height: GameConstants.playerSize.height * 0.75)
             sprite.name = "catSprite"
             node.addChild(sprite)
         case .cow:
@@ -223,8 +227,15 @@ enum GameSpriteSheet {
         columns: 4,
         rows: 3,
         insetPixels: 2,
-        artworkWidthFraction: 0.96
+        artworkWidthFraction: 0.90,
+        artworkHeightFraction: 0.80
     )
+
+    /// Warm the CPU-side atlas normalization before the first encounter is spawned.
+    static func prepareEncounterFrames() {
+        _ = catFrames
+        _ = thiefFrames
+    }
 
     /// Crops one row from a regular grid. rowIndex is counted from the image's top edge;
     /// SpriteKit texture rectangles start at the bottom-left, so the y coordinate is flipped.
@@ -259,7 +270,6 @@ enum GameSpriteSheet {
                                  rowHeight: CGFloat = 1) -> [SKTexture] {
         let sheet = SKTexture(imageNamed: imageName)
         let cellWidth = sourceSize.width / CGFloat(frameCount)
-        let insetX = insetPixels / sourceSize.width
         let insetY = insetPixels / sourceSize.height
 
         return (0..<frameCount).map { index in
@@ -281,7 +291,8 @@ enum GameSpriteSheet {
                                      rows: Int,
                                      insetPixels: CGFloat,
                                      artworkWidthFraction: CGFloat,
-                                     baselineFraction: CGFloat = 0.06) -> [[SKTexture]] {
+                                     baselineFraction: CGFloat = 0.06,
+                                     artworkHeightFraction: CGFloat? = nil) -> [[SKTexture]] {
         let atlas = SKTexture(imageNamed: imageName).cgImage()
         let pixelWidth = atlas.width
         let pixelHeight = atlas.height
@@ -306,6 +317,8 @@ enum GameSpriteSheet {
 
         let safeWidthFraction = min(max(artworkWidthFraction, 0.1), 0.96)
         let safeBaselineFraction = min(max(baselineFraction, 0), 0.2)
+        let safeHeightFraction = artworkHeightFraction.map { min(max($0, 0.1), 0.96) }
+
         return (0..<rows).map { row in
             (0..<columns).map { column in
                 let cellOriginX = column * cellWidth
@@ -361,12 +374,25 @@ enum GameSpriteSheet {
 
                 let canvas = CGSize(width: cellWidth, height: cellHeight)
                 let targetWidth = canvas.width * safeWidthFraction
-                let scale = targetWidth / CGFloat(crop.width)
-                let targetHeight = CGFloat(crop.height) * scale
-                let destination = CGRect(x: (canvas.width - targetWidth) / 2,
+                // Keep the character's visible height consistent across poses. A single
+                // atlas-wide scale leaves smaller-drawn attack frames looking like they
+                // suddenly grow/shrink when their texture changes. Width remains capped so
+                // a wide reaching pose can extend naturally without enlarging the sprite.
+                let maximumArtworkHeight = canvas.height * (safeHeightFraction ?? safeWidthFraction)
+                let scale: CGFloat
+                if safeHeightFraction != nil {
+                    scale = min(targetWidth / CGFloat(crop.width),
+                                maximumArtworkHeight / CGFloat(crop.height))
+                } else {
+                    // Preserve existing sizing for other callers such as the cat atlas.
+                    scale = targetWidth / CGFloat(crop.width)
+                }
+                let renderedWidth = CGFloat(crop.width) * scale
+                let renderedHeight = CGFloat(crop.height) * scale
+                let destination = CGRect(x: (canvas.width - renderedWidth) / 2,
                                          y: canvas.height * safeBaselineFraction,
-                                         width: targetWidth,
-                                         height: targetHeight)
+                                         width: renderedWidth,
+                                         height: renderedHeight)
                 let colorSpace = CGColorSpaceCreateDeviceRGB()
                 let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue |
                     CGBitmapInfo.byteOrder32Big.rawValue

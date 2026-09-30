@@ -25,13 +25,22 @@ struct GameMenuButtonStyle: ButtonStyle {
             .lineLimit(1)
             .minimumScaleFactor(0.72)
             .frame(maxWidth: .infinity)
-            .frame(height: filled ? 62 : 60)
-            .padding(.horizontal, filled ? 22 : 18)
+            .frame(height: filled ? 104 : 68)
             .background {
-                Image(filled ? "DeliverWhileHotMenuButtonPrimary" : "DeliverWhileHotMenuButtonSecondary")
-                    .resizable()
-                    .scaledToFill()
-                    .accessibilityHidden(true)
+                GeometryReader { geometry in
+                    if filled {
+                        Image("DeliverWhileHotMenuButtonPrimary")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .accessibilityHidden(true)
+                    } else {
+                        Image("DeliverWhileHotMenuButtonSecondary")
+                            .resizable()
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .accessibilityHidden(true)
+                    }
+                }
             }
             .scaleEffect(configuration.isPressed ? 0.965 : 1)
             .brightness(configuration.isPressed ? 0.06 : 0)

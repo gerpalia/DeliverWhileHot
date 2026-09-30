@@ -64,7 +64,7 @@ struct StartView: View {
                 )
                 .ignoresSafeArea()
 
-                VStack(spacing: 12) {
+                VStack(spacing: 4) {
                     Spacer()
 
                     Button {
@@ -77,7 +77,7 @@ struct StartView: View {
                     }
                     .buttonStyle(GameMenuButtonStyle(filled: true))
 
-                    HStack(spacing: 12) {
+                    HStack(spacing: 16) {
                         menuButton(titleKey: "menu.how_to_play", page: .howToPlay)
                         menuButton(titleKey: "menu.about", page: .about)
                     }
@@ -97,6 +97,8 @@ struct StartView: View {
                 .font(GameStyle.secondaryButtonFont)
         }
         .buttonStyle(GameMenuButtonStyle())
+        .frame(maxWidth: .infinity)
+        .clipped()
     }
 }
 

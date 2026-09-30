@@ -7,10 +7,12 @@ import SpriteKit
 
 final class GameScene: SKScene, SKPhysicsContactDelegate {
     private enum EndingSequencePhase: Equatable {
-        case inactive, preparePrompt, jumpPrompt, successFlight, failedCrash, exploding
+        case inactive, approach, preparePrompt, jumpPrompt, successFlight, failedCrash, exploding
     }
 
-    private static let endingPromptDuration: TimeInterval = 2.4
+    private static let preparePromptDuration: TimeInterval = 2.1
+    private static let jumpPromptDuration: TimeInterval = 1.55
+    private static let endingPromptWindow: CGFloat = 0.08
 
     private let nodeFactory = GameNodeFactory()
     private let worldNode = SKNode()
@@ -37,10 +39,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastEatTime: TimeInterval = -.infinity
     private var lastMolotovTime: TimeInterval = -.infinity
     private var molotovCount = GameConstants.startingMolotovCount
-    private var didSpawnOfficer = false
     private var didSpawnThief = false
     private var didSpawnPidgeot = false
-    private var patrolOfficer: EncounterNode?
     private var hazardSpawnTimer: TimeInterval = 0
     private var hazardSpawnIndex = 0
     private(set) var gameState = GameState()
@@ -58,6 +58,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                    onEndingPromptChanged: ((EndingPromptStep?, CGFloat) -> Void)? = nil) {
         guard !isConfigured, viewSize.width > 0, viewSize.height > 0 else { return }
         isConfigured = true
+        GameSpriteSheet.prepareEncounterFrames()
         self.onStateChanged = onStateChanged
         self.onFinished = onFinished
         self.onEndingPromptChanged = onEndingPromptChanged
@@ -109,20 +110,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let rightRoadEdge = size.width / 2 + routeWidth / 2
         worldNode.addChild(nodeFactory.makeBonus(
             kind: .foodSteal,
-            position: CGPoint(x: rightRoadEdge + 10,
+            position: CGPoint(x: rightRoadEdge - 10,
                               y: routeHeight * 0.36)
         ))
-        worldNode.addChild(nodeFactory.makeBonus(
-            kind: .fire,
-            position: CGPoint(x: size.width / 2 + routeWidth * 0.18,
-                              y: routeHeight * 0.58)
-        ))
-        worldNode.addChild(nodeFactory.makeBonus(
-            kind: .water,
-            position: CGPoint(x: size.width / 2 - routeWidth * 0.18,
-                              y: routeHeight * 0.76)
-        ))
-
         player = nodeFactory.makePlayer()
         player.position = CGPoint(x: size.width / 2, y: viewSize.height * 0.22)
         player.zPosition = 20
@@ -135,7 +125,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let deltaTime = min(currentTime - (lastUpdateTime ?? currentTime), 1.0 / 20.0)
         lastUpdateTime = currentTime
 
-        if endingSequencePhase != .inactive {
+        if endingSequencePhase != .inactive && endingSequencePhase != .approach {
             updateEndingSequence(deltaTime: deltaTime)
             return
         }
@@ -160,9 +150,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         let destinationDistance = nextDestinationDistanceAhead
-        let approachAmount = min(1, max(0, (520 - destinationDistance) / 520))
+        if endingSequencePhase == .inactive && destinationDistance <= GameConstants.endingApproachDistance {
+            beginEndingApproach()
+        }
+        let approachAmount = min(1, max(0, (720 - destinationDistance) / 720))
         let approachEase = approachAmount * approachAmount * (3 - 2 * approachAmount)
-        let worldDeltaTime = gameplayDeltaTime * TimeInterval(1 - 0.34 * approachEase)
+        let worldDeltaTime = gameplayDeltaTime * TimeInterval(1 - 0.38 * approachEase)
 
         GameRules.advanceTemperature(&gameState, by: gameplayDeltaTime)
         if gameState.foodTemperature <= 0 {
@@ -171,16 +164,28 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
 
         elapsedStageTime += gameplayDeltaTime
-        updateWorldHazards(deltaTime: worldDeltaTime)
-        updatePatrolOfficer(deltaTime: worldDeltaTime)
-        updateEncounters(deltaTime: worldDeltaTime)
-        updateMolotovProjectiles(deltaTime: worldDeltaTime)
+        if endingSequencePhase != .approach {
+            updateWorldHazards(deltaTime: worldDeltaTime)
+            updateEncounters(deltaTime: worldDeltaTime)
+            updateMolotovProjectiles(deltaTime: worldDeltaTime)
+        }
 
         worldNode.position.y -= GameConstants.automaticScrollSpeed * CGFloat(worldDeltaTime)
+        if endingSequencePhase == .approach {
+            endingSetpiece?.position.y -= GameConstants.automaticScrollSpeed * CGFloat(worldDeltaTime)
+            if endingWallDistanceAhead <= GameConstants.endingPromptDistance {
+                beginEndingTimingChallenge()
+                publishState()
+                return
+            }
+        }
         if worldNode.position.y <= -routeHeight {
-            // Reaching the end of the scrolled route must enter the same timed doorway
-            // sequence as touching its trigger, never jump straight to the result screen.
-            beginEndingSequence()
+            if endingSequencePhase == .approach {
+                beginEndingTimingChallenge()
+            } else {
+                beginEndingApproach()
+                beginEndingTimingChallenge()
+            }
             return
         }
 
@@ -194,6 +199,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let movementMultiplier: CGFloat = player.isThrowing ? 0 : (player.isEating ? 0.45 : 1.0)
         player.setMovement(horizontal: horizontalInput, vertical: verticalInput)
+        player.updateMovement(deltaTime: deltaTime)
         let targetVelocity = CGVector(
             dx: horizontalInput * GameConstants.playerMovementSpeed * movementMultiplier,
             dy: verticalInput * GameConstants.playerVerticalMovementSpeed * movementMultiplier
@@ -368,19 +374,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
 
-        if let officer = patrolOfficer {
-            let officerCenter = CGPoint(x: officer.position.x + worldNode.position.x,
-                                        y: officer.position.y + worldNode.position.y)
-            let horizontalDistance = abs(playerCenter.x - officerCenter.x)
-            let verticalDistance = abs(playerCenter.y - officerCenter.y)
-            let isOverlapping = horizontalDistance <= playerHalfWidth + 31 &&
-                verticalDistance <= playerHalfHeight + 38
-
-            if isOverlapping {
-                handleOfficerInteraction(at: time)
-            }
-        }
-
         for encounter in encounterNodeLayer.children.compactMap({ $0 as? EncounterNode }) {
             let encounterCenter = encounter.position
             let horizontalDistance = abs(playerCenter.x - encounterCenter.x)
@@ -389,13 +382,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 verticalDistance <= playerHalfHeight + 40
 
             if isOverlapping {
-                switch encounter.kind {
-                case .patrolOfficer:
-                    handleOfficerInteraction(at: time)
-                case .thief, .pidgeot:
-                    handleObstacleContact(at: time)
-                    encounter.removeFromParent()
-                }
+                handleObstacleContact(at: time)
+                encounter.removeFromParent()
             }
         }
 
@@ -530,7 +518,13 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             abs(playerCenter.y - destinationCenter.y) <= playerHalfHeight + destinationHalfHeight
 
         if reachedDestination {
-            beginEndingSequence()
+            if endingSequencePhase == .approach {
+                beginEndingTimingChallenge()
+            } else {
+                beginEndingApproach(distanceAhead: max(GameConstants.endingPromptDistance,
+                                                       nextDestinationDistanceAhead))
+                beginEndingTimingChallenge()
+            }
         }
     }
 
@@ -565,10 +559,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         if startsBurning {
             player.setBurning(true)
-        }
-        if let hazardKind, hazardKind == .cat {
-            run(.playSoundFileNamed(GameConstants.catAttackSoundName,
-                                    waitForCompletion: false))
         }
         player.playHitAnimation()
         run(.playSoundFileNamed(GameConstants.hitSoundName, waitForCompletion: false),
@@ -617,15 +607,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         return .blocked
     }
 
-    private func handleOfficerInteraction(at time: TimeInterval) {
-        guard time - lastCollisionTime >= GameConstants.collisionCooldown else { return }
-        lastCollisionTime = time
-
-        if GameRules.payOfficerBribe(&gameState) {
-            publishState()
-        }
-    }
-
     private func handlePidgeotMess(at time: TimeInterval) {
         guard time - lastCollisionTime >= GameConstants.collisionCooldown else { return }
         lastCollisionTime = time
@@ -643,18 +624,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         switch bonus.kind {
         case .foodSteal:
             GameRules.applyPizzaStealBonus(&gameState)
-        case .fire:
-            bonus.removeFromParent()
-            GameRules.applyFireBonus(&gameState)
-            playBuffSound()
-            if gameState.health <= 0 {
-                finish(with: .healthDepleted)
-                return
-            }
-        case .water:
-            bonus.removeFromParent()
-            player.setBurning(false)
-            playBuffSound()
         }
 
         if bonus.kind == .foodSteal {
@@ -675,11 +644,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         if player.startEating() {
             publishState()
         }
-    }
-
-    private func playBuffSound() {
-        run(.playSoundFileNamed(GameConstants.buffShineSoundName,
-                                waitForCompletion: false))
     }
 
     private func playMolotovImpactSound() {
@@ -746,12 +710,51 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private var endingPromptProgress: CGFloat {
-        CGFloat((endingPromptElapsed / Self.endingPromptDuration + 0.5)
-            .truncatingRemainder(dividingBy: 1))
+        let duration = endingSequencePhase == .jumpPrompt
+            ? Self.jumpPromptDuration
+            : Self.preparePromptDuration
+        return CGFloat((endingPromptElapsed / duration + 0.5).truncatingRemainder(dividingBy: 1))
     }
 
-    private func beginEndingSequence() {
+    private var endingWallDistanceAhead: CGFloat {
+        guard let endingSetpiece else { return .greatestFiniteMagnitude }
+        let wallCenter = endingSetpiece.convert(
+            CGPoint(x: size.width / 2, y: endingSetpiece.wallCenterY),
+            to: self
+        )
+        return wallCenter.y - player.position.y
+    }
+
+    private func beginEndingApproach(distanceAhead: CGFloat? = nil) {
         guard endingSequencePhase == .inactive else { return }
+        endingSequencePhase = .approach
+        worldNode.children
+            .filter { $0 is HazardNode || $0 is BonusNode }
+            .forEach { $0.removeFromParent() }
+        encounterNodeLayer.removeAllChildren()
+        worldNode.childNode(withName: "destination")?.isHidden = true
+
+        let setpiece = EndingSetpieceNode(sceneSize: size, roadWidth: routeWidth)
+        let alignedDistance = distanceAhead ?? nextDestinationDistanceAhead
+        setpiece.position.y = player.position.y + alignedDistance - setpiece.wallCenterY
+        endingSetpiece = setpiece
+        addChild(setpiece)
+
+        let doorPoint = setpiece.convert(setpiece.doorTarget, to: self)
+        let focusPoint = CGPoint(x: size.width / 2 + (doorPoint.x - size.width / 2) * 0.16,
+                                 y: size.height / 2 + (doorPoint.y - size.height / 2) * 0.08)
+        gameplayCamera.run(.group([
+            .move(to: focusPoint, duration: 1.15),
+            .scale(to: 1.035, duration: 1.15)
+        ]), withKey: "endingDoorFocus")
+    }
+
+    private func beginEndingTimingChallenge() {
+        guard endingSequencePhase == .approach || endingSequencePhase == .inactive else { return }
+        if endingSetpiece == nil {
+            beginEndingApproach(distanceAhead: max(GameConstants.endingPromptDistance,
+                                                   nextDestinationDistanceAhead))
+        }
         hasReachedDestination = true
         horizontalInput = 0
         verticalInput = 0
@@ -760,22 +763,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         player.stopAnimations()
         worldNode.speed = 0
         encounterNodeLayer.speed = 0
-        worldNode.children
-            .filter { $0 is HazardNode || $0 is BonusNode }
-            .forEach { $0.removeFromParent() }
-        encounterNodeLayer.removeAllChildren()
-        patrolOfficer = nil
-        worldNode.childNode(withName: "destination")?.isHidden = true
-
-        let setpiece = EndingSetpieceNode(sceneSize: size, roadWidth: routeWidth)
-        endingSetpiece = setpiece
-        addChild(setpiece)
-        let focusPoint = CGPoint(x: size.width / 2 + (setpiece.doorTarget.x - size.width / 2) * 0.18,
-                                 y: size.height / 2 + (setpiece.doorTarget.y - size.height / 2) * 0.10)
-        gameplayCamera.run(.group([
-            .move(to: focusPoint, duration: 0.72),
-            .scale(to: 1.045, duration: 0.72)
-        ]), withKey: "endingDoorFocus")
+        gameplayCamera.removeAction(forKey: "endingDoorFocus")
+        if let endingSetpiece {
+            let doorPoint = endingSetpiece.convert(endingSetpiece.doorTarget, to: self)
+            let focusPoint = CGPoint(x: size.width / 2 + (doorPoint.x - size.width / 2) * 0.18,
+                                     y: size.height / 2 + (doorPoint.y - size.height / 2) * 0.10)
+            gameplayCamera.run(.group([
+                .move(to: focusPoint, duration: 0.4),
+                .scale(to: 1.045, duration: 0.4)
+            ]), withKey: "endingDoorFocus")
+        }
         showEndingPrompt(.prepare, phase: .preparePrompt)
     }
 
@@ -796,12 +793,15 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         switch endingSequencePhase {
         case .preparePrompt, .jumpPrompt:
             endingPromptElapsed += deltaTime
-            guard endingPromptElapsed < Self.endingPromptDuration else {
+            let duration = endingSequencePhase == .jumpPrompt
+                ? Self.jumpPromptDuration
+                : Self.preparePromptDuration
+            guard endingPromptElapsed < duration else {
                 beginFailedEnding()
                 return
             }
             onEndingPromptChanged?(endingPromptStep, endingPromptProgress)
-        case .inactive, .successFlight, .failedCrash, .exploding:
+        case .inactive, .approach, .successFlight, .failedCrash, .exploding:
             break
         }
     }
@@ -809,7 +809,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     func submitEndingPromptTap() {
         guard endingSequencePhase == .preparePrompt || endingSequencePhase == .jumpPrompt else { return }
         let progress = endingPromptProgress
-        guard progress <= 0.14 || progress >= 0.86 else {
+        guard progress <= Self.endingPromptWindow || progress >= 1 - Self.endingPromptWindow else {
             beginFailedEnding()
             return
         }
@@ -845,30 +845,27 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         rider.name = "endingDivingRider"
         // The temporary source art is a wide, oblique pose rather than the game's overhead
         // angle; keeping it near the gameplay sprite's footprint limits that mismatch.
-        rider.size = CGSize(width: 92, height: 62)
+        rider.size = CGSize(width: 72, height: 50)
         rider.position = CGPoint(x: player.position.x + 5, y: player.position.y + 3)
         rider.zPosition = 31
         addChild(rider)
 
-        let riderDive = SKAction.group([
-            .move(to: endingSetpiece.doorTarget, duration: 0.92),
-            .scale(to: 0.78, duration: 0.92)
-        ])
-        riderDive.timingMode = .easeIn
+        let doorTarget = endingSetpiece.convert(endingSetpiece.doorTarget, to: self)
+        let impactPoint = endingSetpiece.convert(endingSetpiece.scooterImpactPoint, to: self)
         rider.run(.sequence([
-            riderDive,
+            .group([.move(to: doorTarget, duration: 0.92), .scale(to: 0.78, duration: 0.92)]),
             .group([.scale(to: 0.18, duration: 0.16), .fadeOut(withDuration: 0.16)]),
             .removeFromParent()
         ]))
 
-        let scooterRide = SKAction.move(to: endingSetpiece.scooterImpactPoint, duration: 0.98)
+        let scooterRide = SKAction.move(to: impactPoint, duration: 0.98)
         scooterRide.timingMode = .easeIn
         scooter.run(.sequence([
             scooterRide,
             .run { [weak self, weak scooter] in
                 scooter?.removeFromParent()
                 guard let self else { return }
-                self.playEndingExplosion(at: endingSetpiece.scooterImpactPoint,
+                self.playEndingExplosion(at: impactPoint,
                                          result: GameRules.deliveryResult(for: self.gameState))
             }
         ]))
@@ -882,7 +879,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         player.stopAnimations()
         player.physicsBody = nil
 
-        let crashPoint = CGPoint(x: player.position.x, y: endingSetpiece.scooterImpactPoint.y)
+        let impactPoint = endingSetpiece.convert(endingSetpiece.scooterImpactPoint, to: self)
+        let crashPoint = CGPoint(x: player.position.x, y: impactPoint.y)
         let crash = SKAction.move(to: crashPoint, duration: 0.82)
         crash.timingMode = .easeIn
         player.run(.sequence([
@@ -917,7 +915,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         if !didSpawnThief, elapsedStageTime >= GameConstants.thiefSpawnTime {
             didSpawnThief = true
             let thiefOnLeft = Bool.random()
-            let thiefHalfWidth = GameConstants.playerSize.width * 0.36
             let sideInset: CGFloat = 10
             let thiefX = thiefOnLeft
                 ? size.width / 2 - routeWidth / 2 + sideInset
@@ -925,7 +922,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             let entryStartX = thiefX - (thiefOnLeft ? CGFloat(1) : CGFloat(-1)) * 30
             let thief = EncounterNode(kind: .thief,
                                       position: CGPoint(x: thiefX,
-                                                        y: size.height - GameConstants.topTouchExclusionHeight - 50),
+                                                        y: size.height - GameConstants.topTouchExclusionHeight - 105),
                                       horizontalDirection: thiefOnLeft ? 1 : -1,
                                       entryStartX: entryStartX,
                                       entryDuration: GameConstants.sideHazardEntryDuration)
@@ -940,7 +937,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             let startX = direction > 0 ? -70 : size.width + 70
             let pidgeot = EncounterNode(kind: .pidgeot,
                                         position: CGPoint(x: startX,
-                                                          y: size.height - GameConstants.topTouchExclusionHeight - 50),
+                                                          y: size.height - GameConstants.topTouchExclusionHeight - 105),
                                         horizontalDirection: direction)
             encounterNodeLayer.addChild(pidgeot)
         }
@@ -1023,35 +1020,6 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
-    private func updatePatrolOfficer(deltaTime: TimeInterval) {
-        if !didSpawnOfficer, elapsedStageTime >= GameConstants.officerSpawnTime {
-            didSpawnOfficer = true
-            let officerHalfWidth: CGFloat = 31
-            let minimumX = size.width / 2 - routeWidth / 2 + officerHalfWidth
-            let maximumX = size.width / 2 + routeWidth / 2 - officerHalfWidth
-            let randomX = CGFloat.random(in: minimumX...maximumX)
-            let spawnY = size.height - GameConstants.topTouchExclusionHeight + 90 - worldNode.position.y
-            let officer = EncounterNode(kind: .patrolOfficer,
-                                        position: CGPoint(x: randomX, y: spawnY))
-            patrolOfficer = officer
-            worldNode.addChild(officer)
-        }
-
-        guard let officer = patrolOfficer else { return }
-        officer.update(deltaTime: deltaTime,
-                       targetX: player.position.x,
-                       targetY: player.position.y,
-                       routeWidth: routeWidth,
-                       sceneWidth: size.width)
-        if officer.hasReachedDuration && !officer.isOfficerRetreating {
-            officer.beginOfficerRetreat(sceneWidth: size.width)
-        }
-        if officer.hasExitedSide(sceneWidth: size.width) {
-            officer.removeFromParent()
-            patrolOfficer = nil
-        }
-    }
-
     private func updateWorldHazards(deltaTime: TimeInterval) {
         hazardSpawnTimer += deltaTime
         if hazardSpawnTimer >= GameConstants.hazardSpawnInterval {
@@ -1077,8 +1045,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                                                       horizontalDirection: hazardDirection))
             switch definition.kind {
             case .cat:
-                run(.playSoundFileNamed(GameConstants.catSpawnSoundName,
-                                        waitForCompletion: false))
+                break // Cat cues are synchronized to its visible warning and pounce.
             case .cow:
                 run(.playSoundFileNamed(GameConstants.cowSpawnSoundName,
                                         waitForCompletion: false))

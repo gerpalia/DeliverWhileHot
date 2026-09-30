@@ -126,13 +126,14 @@ final class PlayerNode: SKNode {
         let requestedAngle = isMoving
             ? atan2(facingVertical, facingHorizontal) + .pi / 2
             : CGFloat.pi
-        guard abs(requestedAngle - targetAngle) > 0.001 else { return }
         targetAngle = requestedAngle
+    }
 
-        spriteNode.run(.rotate(toAngle: requestedAngle,
-                               duration: 0.09,
-                               shortestUnitArc: true),
-                       withKey: "movementTilt")
+    func updateMovement(deltaTime: TimeInterval) {
+        let angleDelta = atan2(sin(targetAngle - spriteNode.zRotation),
+                               cos(targetAngle - spriteNode.zRotation))
+        let response = CGFloat(1 - exp(-deltaTime / 0.10))
+        spriteNode.zRotation += angleDelta * response
     }
 
     func stopAnimations() {

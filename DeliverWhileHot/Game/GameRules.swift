@@ -4,15 +4,15 @@
 //
 
 struct GameRules {
-    static let temperatureLossPerSecond = 0.032
+    // Leave some warmth for the final approach; bonus pickups provide a safety margin
+    // rather than being mandatory just to reach the destination.
+    static let temperatureLossPerSecond = 0.027
     static let damagePerObstacleContact = 1
     static let foodCostPerMeal = 0.25
     static let bribeFoodCost = 0.25
     static let pidgeotFoodLoss = 0.25
     static let pizzaStealFoodAmount = 0.50
     static let blockedHitFoodLoss = 0.25
-    static let fireBonusTemperature = 0.20
-    static let fireBonusDamage = 1
     static let healthRestoredPerMeal = 1
     static let minimumTemperatureForDelivery = 0.20
     static let minimumFoodForDelivery = 0.25
@@ -42,11 +42,6 @@ struct GameRules {
 
     static func applyPizzaStealBonus(_ state: inout GameState) {
         state.foodRemaining = min(1.0, state.foodRemaining + pizzaStealFoodAmount)
-    }
-
-    static func applyFireBonus(_ state: inout GameState) {
-        state.foodTemperature = min(1.0, state.foodTemperature + fireBonusTemperature)
-        state.health = max(0, state.health - fireBonusDamage)
     }
 
     @discardableResult
