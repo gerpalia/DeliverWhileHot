@@ -11,7 +11,8 @@ enum EncounterKind: Equatable {
 }
 
 final class EncounterNode: SKNode {
-    private static let thiefArtworkSize = CGSize(width: 80, height: 108)
+    // Match the normalized texture canvas ratio so changing poses doesn't stretch the art.
+    private static let thiefArtworkSize = CGSize(width: 74, height: 108)
     let kind: EncounterKind
     private let visualNode: SKShapeNode
     private let artworkNode: SKSpriteNode?
@@ -181,7 +182,7 @@ final class EncounterNode: SKNode {
                 self.pendingThiefEffect = nil
                 projectileTimer = 0
                 projectilesThrown += 1
-                playThiefReleaseAnimation(for: pendingThiefEffect)
+                playThiefReleaseAnimation()
                 return pendingThiefEffect
             }
 
@@ -200,7 +201,7 @@ final class EncounterNode: SKNode {
             pendingThiefEffect = effect
             warningRemaining = GameConstants.thiefWarningDuration
             didBeginThiefWarningThisFrame = true
-            playThiefWindUp(for: effect)
+            playThiefWindUp()
             return nil
         case .pidgeot:
             projectileTimer += deltaTime
@@ -230,15 +231,12 @@ final class EncounterNode: SKNode {
                         withKey: "thiefEntryAnimation")
     }
 
-    private func playThiefWindUp(for effect: ProjectileEffect) {
+    private func playThiefWindUp() {
         guard let artworkNode, let warningIndicator else { return }
-        let rowIndex = effect == .burningDamage ? 2 : 1
-        guard let frames = thiefFrameRows?[rowIndex], frames.count >= 4 else { return }
+        guard let frames = thiefFrameRows?[1], frames.count >= 4 else { return }
 
         warningIndicator.isHidden = false
-        warningIndicator.fillColor = effect == .burningDamage
-            ? SKColor(red: 0.98, green: 0.38, blue: 0.08, alpha: 0.96)
-            : SKColor(red: 0.76, green: 0.14, blue: 0.08, alpha: 0.94)
+        warningIndicator.fillColor = SKColor(red: 0.76, green: 0.14, blue: 0.08, alpha: 0.94)
         warningIndicator.removeAllActions()
         warningIndicator.setScale(0.82)
         warningIndicator.alpha = 1
@@ -249,33 +247,36 @@ final class EncounterNode: SKNode {
 
         artworkNode.removeAction(forKey: "thiefEntryAnimation")
         artworkNode.removeAction(forKey: "thiefReleaseAnimation")
-        let fixedSize = artworkNode.size
+        let fixedSize = Self.thiefArtworkSize
+        artworkNode.texture = frames[0]
+        artworkNode.size = fixedSize
         artworkNode.run(.sequence([
-            .setTexture(frames[0], resize: false),
             .wait(forDuration: 0.16),
-            .setTexture(frames[1], resize: false),
-            .run { [weak artworkNode] in artworkNode?.size = fixedSize }
+            .run { [weak artworkNode] in
+                artworkNode?.texture = frames[1]
+                artworkNode?.size = fixedSize
+            }
         ]), withKey: "thiefWindUp")
     }
 
-    private func playThiefReleaseAnimation(for effect: ProjectileEffect) {
+    private func playThiefReleaseAnimation() {
         guard let artworkNode, let warningIndicator else { return }
-        let rowIndex = effect == .burningDamage ? 2 : 1
-        guard let frames = thiefFrameRows?[rowIndex], frames.count >= 4 else { return }
+        guard let frames = thiefFrameRows?[1], frames.count >= 4 else { return }
 
         warningIndicator.isHidden = true
         warningIndicator.removeAllActions()
         artworkNode.removeAction(forKey: "thiefWindUp")
-        let fixedSize = artworkNode.size
-        // This atlas pose already contains a detached knife. Use the clean follow-through
-        // pose instead so the scene's actual ProjectileNode is the only knife after release.
+        let fixedSize = Self.thiefArtworkSize
+        let idleFrame = thiefFrameRows?[0][3] ?? frames[0]
         artworkNode.texture = frames[3]
         artworkNode.size = fixedSize
+        // The projectile remains separate from the atlas follow-through art.
         artworkNode.run(.sequence([
-            .setTexture(frames[3], resize: false),
             .wait(forDuration: 0.30),
-            .setTexture(thiefFrameRows?[0][3] ?? frames[0], resize: false),
-            .run { [weak artworkNode] in artworkNode?.size = fixedSize }
+            .run { [weak artworkNode] in
+                artworkNode?.texture = idleFrame
+                artworkNode?.size = fixedSize
+            }
         ]), withKey: "thiefReleaseAnimation")
     }
 

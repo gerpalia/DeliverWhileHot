@@ -1,0 +1,12 @@
+# Xcode local state and build output
+**/xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+
+# macOS noise
+.DS_Store
+
+# Swift Package Manager build output, if used for future tooling
+.build/
+.swiftpm/

@@ -1,6 +1,6 @@
 import SpriteKit
 
-/// Decorative, non-collidable dead-end wall and side doorway used only after the stage ends.
+/// Decorative, non-collidable dead-end wall and open side entrance used only after the stage ends.
 final class EndingSetpieceNode: SKNode {
     let doorTarget: CGPoint
     let scooterImpactPoint: CGPoint
@@ -12,10 +12,14 @@ final class EndingSetpieceNode: SKNode {
         let wallY = sceneSize.height * 0.70
         wallCenterY = wallY
         let wallHeight: CGFloat = 92
-        let wallWidth = max(roadWidth + 18, sceneSize.width * 0.72)
-        let doorX = sceneSize.width - 58
+        // Keep the barricade within the road so it doesn't swallow the sidewalk entrance.
+        let wallWidth = roadWidth + 16
+        let sideWidth = max(0, (sceneSize.width - roadWidth) / 2)
+        let sidewalkWidth = min(sceneSize.width * GameConstants.sidewalkWidthRatio, sideWidth)
+        let frontageWidth = max(1, sideWidth - sidewalkWidth)
+        let doorX = sceneSize.width - frontageWidth / 2
         let doorY = wallY - 158
-        doorTarget = CGPoint(x: doorX - 8, y: doorY - 10)
+        doorTarget = CGPoint(x: doorX, y: doorY)
         scooterImpactPoint = CGPoint(x: sceneSize.width / 2,
                                      y: wallY - wallHeight / 2 - 38)
         super.init()
@@ -35,14 +39,6 @@ final class EndingSetpieceNode: SKNode {
         let wallTexture = SKTexture(imageNamed: "DeliverWhileHotPaintedWalls")
         let wallBand = SKTexture(rect: CGRect(x: 0, y: 0.75, width: 1, height: 0.24),
                                  in: wallTexture)
-        let houseFrontage = SKSpriteNode(texture: wallBand,
-                                         size: CGSize(width: 256, height: 118))
-        houseFrontage.position = CGPoint(x: sceneSize.width - 48, y: doorY + 16)
-        houseFrontage.zRotation = .pi / 2
-        houseFrontage.alpha = 0.96
-        houseFrontage.zPosition = -1
-        addChild(houseFrontage)
-
         let facade = SKSpriteNode(texture: wallBand,
                                   size: CGSize(width: wallWidth - 6, height: wallHeight - 8))
         facade.position = barrier.position
@@ -58,63 +54,77 @@ final class EndingSetpieceNode: SKNode {
         warningBand.zPosition = 2
         addChild(warningBand)
 
-        let doorstep = SKShapeNode(rectOf: CGSize(width: 94, height: 34), cornerRadius: 3)
-        doorstep.position = CGPoint(x: doorX - 12, y: doorY - 76)
-        doorstep.fillColor = SKColor(red: 0.48, green: 0.30, blue: 0.16, alpha: 0.92)
-        doorstep.strokeColor = SKColor(red: 0.24, green: 0.19, blue: 0.15, alpha: 0.95)
-        doorstep.lineWidth = 2
-        doorstep.zPosition = 2
-        addChild(doorstep)
-
-        let thresholdLight = SKShapeNode(ellipseOf: CGSize(width: 76, height: 23))
-        thresholdLight.position = CGPoint(x: doorX - 20, y: doorY - 87)
-        thresholdLight.fillColor = SKColor(red: 1, green: 0.58, blue: 0.20, alpha: 0.18)
-        thresholdLight.strokeColor = .clear
-        thresholdLight.zPosition = 1
-        addChild(thresholdLight)
-
-        addDoor(at: CGPoint(x: doorX, y: doorY))
-        addArrow(at: CGPoint(x: doorX - 45, y: doorY + 9))
+        addOpenHouseEntrance(at: CGPoint(x: doorX, y: doorY),
+                             frontageWidth: frontageWidth,
+                             wallTexture: wallBand)
+        addArrow(at: CGPoint(x: doorX - frontageWidth * 0.32, y: doorY + 14))
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("EndingSetpieceNode does not support NSCoder initialization")
     }
 
-    private func addDoor(at position: CGPoint) {
-        let props = SKTexture(imageNamed: "DeliverWhileHotNeighborhoodProps")
-        let doorway = SKTexture(rect: CGRect(x: 0.39, y: 0.53,
-                                             width: 0.34, height: 0.47),
-                                in: props)
-        let frame = SKShapeNode(rectOf: CGSize(width: 72, height: 132), cornerRadius: 3)
-        frame.position = position
-        frame.fillColor = SKColor(red: 0.30, green: 0.25, blue: 0.19, alpha: 1)
-        frame.strokeColor = SKColor(red: 0.63, green: 0.53, blue: 0.38, alpha: 1)
-        frame.lineWidth = 4
-        frame.zPosition = 3
-        addChild(frame)
+    private func addOpenHouseEntrance(at position: CGPoint,
+                                      frontageWidth: CGFloat,
+                                      wallTexture: SKTexture) {
+        let openingHeight: CGFloat = 108
+        let wallTop = wallCenterY + 60
+        let wallBottom = position.y - openingHeight / 2 - 120
+        let upperLength = max(1, wallTop - (position.y + openingHeight / 2))
+        let lowerLength = max(1, (position.y - openingHeight / 2) - wallBottom)
+        let wallX = position.x
 
-        let opening = SKSpriteNode(texture: doorway,
-                                   size: CGSize(width: 66, height: 122))
-        opening.position = CGPoint(x: position.x, y: position.y - 2)
+        addSideWallSection(texture: wallTexture,
+                           center: CGPoint(x: wallX,
+                                           y: position.y + openingHeight / 2 + upperLength / 2),
+                           length: upperLength,
+                           frontageWidth: frontageWidth)
+        addSideWallSection(texture: wallTexture,
+                           center: CGPoint(x: wallX,
+                                           y: position.y - openingHeight / 2 - lowerLength / 2),
+                           length: lowerLength,
+                           frontageWidth: frontageWidth)
+
+        // The opening is a single dark gap cut into the wall: no door sprite or leaf.
+        let opening = SKShapeNode(rectOf: CGSize(width: frontageWidth * 0.82,
+                                                 height: openingHeight))
+        opening.position = position
+        opening.fillColor = SKColor(red: 0.035, green: 0.027, blue: 0.022, alpha: 1)
+        opening.strokeColor = .clear
         opening.zPosition = 4
         addChild(opening)
 
-        let interior = SKShapeNode(rectOf: CGSize(width: 29, height: 106), cornerRadius: 1)
-        interior.position = CGPoint(x: position.x + 7, y: position.y - 3)
-        interior.fillColor = SKColor(red: 0.10, green: 0.08, blue: 0.08, alpha: 0.96)
-        interior.strokeColor = .clear
-        interior.zPosition = 5
-        addChild(interior)
+        // A faint amber pool falls from the doorway across the sidewalk toward the road.
+        let lightSpill = SKShapeNode(ellipseOf: CGSize(width: 106, height: 142))
+        lightSpill.position = CGPoint(x: position.x - 24, y: position.y - 62)
+        lightSpill.fillColor = SKColor(red: 1, green: 0.55, blue: 0.18, alpha: 0.20)
+        lightSpill.strokeColor = .clear
+        lightSpill.glowWidth = 15
+        lightSpill.zPosition = 2.5
+        addChild(lightSpill)
 
-        let openDoor = SKShapeNode(rectOf: CGSize(width: 24, height: 104), cornerRadius: 2)
-        openDoor.position = CGPoint(x: position.x - 10, y: position.y - 3)
-        openDoor.zRotation = -0.15
-        openDoor.fillColor = SKColor(red: 0.28, green: 0.19, blue: 0.13, alpha: 1)
-        openDoor.strokeColor = SKColor(red: 0.58, green: 0.42, blue: 0.27, alpha: 1)
-        openDoor.lineWidth = 2
-        openDoor.zPosition = 6
-        addChild(openDoor)
+        let interiorGlow = SKShapeNode(ellipseOf: CGSize(width: frontageWidth * 0.72,
+                                                         height: 74))
+        interiorGlow.position = CGPoint(x: position.x - frontageWidth * 0.10,
+                                        y: position.y - 16)
+        interiorGlow.fillColor = SKColor(red: 1, green: 0.61, blue: 0.25, alpha: 0.24)
+        interiorGlow.strokeColor = .clear
+        interiorGlow.glowWidth = 11
+        interiorGlow.zPosition = 5
+        addChild(interiorGlow)
+    }
+
+    private func addSideWallSection(texture: SKTexture,
+                                    center: CGPoint,
+                                    length: CGFloat,
+                                    frontageWidth: CGFloat) {
+        let wall = SKSpriteNode(texture: texture,
+                                size: CGSize(width: length, height: frontageWidth))
+        wall.position = center
+        wall.zRotation = .pi / 2
+        wall.alpha = 0.98
+        wall.zPosition = 3
+        addChild(wall)
     }
 
     private func addArrow(at position: CGPoint) {
@@ -129,7 +139,7 @@ final class EndingSetpieceNode: SKNode {
         arrow.name = "endingDoorArrow"
         arrow.position = position
         arrow.strokeColor = SKColor(red: 1, green: 0.62, blue: 0.25, alpha: 0.92)
-        arrow.lineWidth = 2.5
+        arrow.lineWidth = 2.2
         arrow.lineCap = .round
         arrow.lineJoin = .round
         arrow.glowWidth = 0.8

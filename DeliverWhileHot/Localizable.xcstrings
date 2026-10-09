@@ -11,19 +11,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A chaotic food-delivery arcade game. More hazards, commands, and visual effects will arrive in later milestones."
+            "value" : "A small, playable arcade prototype about getting a hot food order through a dangerous night. Built with SwiftUI and SpriteKit as an evolving learning project."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un juego arcade caótico de reparto de comida. Más peligros, comandos y efectos visuales llegarán en futuras etapas."
+            "value" : "Un prototipo arcade jugable sobre llevar comida caliente a través de una noche peligrosa. Creado con SwiftUI y SpriteKit como proyecto de aprendizaje en evolución."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Um jogo arcade caótico de entrega de comida. Mais perigos, comandos e efeitos visuais chegarão nas próximas etapas."
+            "value" : "Um protótipo arcade jogável sobre entregar comida quente durante uma noite perigosa. Feito com SwiftUI e SpriteKit como um projeto de aprendizado em evolução."
           }
         }
       }
@@ -57,19 +57,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Version 1.0"
+            "value" : "Prototype build • Gameplay and content are still evolving."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Versión 1.0"
+            "value" : "Versión prototipo • La jugabilidad y el contenido siguen evolucionando."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Versão 1.0"
+            "value" : "Versão protótipo • A jogabilidade e o conteúdo continuam evoluindo."
           }
         }
       }
@@ -482,19 +482,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Move with the directional controls, avoid hazards, protect the order, and reach the destination before it gets cold."
+            "value" : "Drag the joystick on the left to steer around the road. You can move sideways to dodge and use the roadside when needed."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Muévete con los controles direccionales, evita los peligros, protege el pedido y llega al destino antes de que se enfríe."
+            "value" : "Arrastra el control de la izquierda para conducir por la carretera. Muévete hacia los lados para esquivar y usa la orilla cuando sea necesario."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mova-se com os controles direcionais, evite perigos, proteja o pedido e chegue ao destino antes que ele esfrie."
+            "value" : "Arraste o controle à esquerda para conduzir pela rua. Mova-se para os lados para desviar e use a calçada quando precisar."
           }
         }
       }
@@ -520,6 +520,62 @@
             "value" : "O protótipo já oferece movimento horizontal e vertical, colisões, saúde, qualidade da comida e um temporizador de temperatura."
           }
         }
+      }
+    },
+    "how_to_play.movement.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Steer" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Conduce" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Conduza" } }
+      }
+    },
+    "how_to_play.actions.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Actions" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Acciones" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Ações" } }
+      }
+    },
+    "how_to_play.actions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hold Block to guard. If a hit arrives within 0.12 seconds of starting the block, you perfect-parry and reflect a projectile. Eat spends 0.25 food (one of four slices) to restore one heart; its cooldown is 3 seconds. Molotov throws in your last movement direction and has a 6-second cooldown." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Mantén Bloquear para defenderte. Si el impacto llega dentro de los 0,12 segundos de iniciar el bloqueo, haces una parada perfecta y devuelves el proyectil. Comer gasta 0,25 de comida (una de cuatro porciones) para recuperar un corazón; tarda 3 segundos en recargarse. Cóctel se lanza en tu última dirección y tarda 6 segundos en recargarse." } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Segure Bloquear para se defender. Se o golpe chegar em até 0,12 segundo após iniciar o bloqueio, você faz uma defesa perfeita e rebate o projétil. Comer gasta 0,25 de comida (uma de quatro fatias) para recuperar um coração; recarrega em 3 segundos. Molotov é lançado na última direção e recarrega em 6 segundos." } }
+      }
+    },
+    "how_to_play.food.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Protect the order" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Protege el pedido" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Proteja o pedido" } }
+      }
+    },
+    "how_to_play.food" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Food slices are your order quality and your recovery resource. Blocking a hit costs one slice; a pigeon can spoil a quarter slice. A roadside delivery bonus restores half a slice. Keep the temperature above the minimum shown by the game." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Las porciones representan la calidad del pedido y sirven para recuperarte. Bloquear un impacto cuesta una porción; una paloma puede arruinar un cuarto. El bonus de entrega junto a la carretera recupera media porción. Mantén la temperatura por encima del mínimo del juego." } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "As fatias representam a qualidade do pedido e também servem para se recuperar. Bloquear um golpe custa uma fatia; um pombo pode estragar um quarto. O bônus de entrega na calçada recupera meia fatia. Mantenha a temperatura acima do mínimo do jogo." } }
+      }
+    },
+    "how_to_play.goal.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reach the door" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Llega a la puerta" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Chegue à porta" } }
+      }
+    },
+    "how_to_play.goal" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Survive the ride with enough health, food, and warmth. At the destination, follow the Prepare and Jump prompts and tap while each circular timer is in its success window." } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "Sobrevive con suficiente salud, comida y calor. Al llegar, sigue las indicaciones Preparar y Saltar, y toca cuando el temporizador circular esté en la zona correcta." } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Sobreviva com saúde, comida e calor suficientes. No destino, siga os avisos Preparar e Pular e toque quando o cronômetro circular estiver na janela certa." } }
       }
     },
     "menu.about" : {

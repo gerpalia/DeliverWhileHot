@@ -1,0 +1,30 @@
+name: iOS build and tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select an available iPhone simulator
+        id: simulator
+        shell: bash
+        run: |
+          device_id="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')"
+          if [[ -z "$device_id" ]]; then
+            echo "No available iPhone simulator was found on this runner." >&2
+            exit 1
+          fi
+          echo "id=$device_id" >> "$GITHUB_OUTPUT"
+
+      - name: Build and run unit/UI tests
+        run: >-
+          xcodebuild test
+          -project DeliverWhileHot.xcodeproj
+          -scheme DeliverWhileHot
+          -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}"
+          CODE_SIGNING_ALLOWED=NO

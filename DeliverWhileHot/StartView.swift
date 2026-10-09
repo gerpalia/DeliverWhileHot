@@ -76,6 +76,8 @@ struct StartView: View {
                             .fontWeight(.bold)
                     }
                     .buttonStyle(GameMenuButtonStyle(filled: true))
+                    .offset(y: 16)
+                    .accessibilityIdentifier("menu.newGame")
 
                     HStack(spacing: 16) {
                         menuButton(titleKey: "menu.how_to_play", page: .howToPlay)
@@ -99,6 +101,7 @@ struct StartView: View {
         .buttonStyle(GameMenuButtonStyle())
         .frame(maxWidth: .infinity)
         .clipped()
+        .accessibilityIdentifier(page == .howToPlay ? "menu.howToPlay" : "menu.about")
     }
 }
 
@@ -122,26 +125,43 @@ private struct MenuInformationView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 18) {
-                if page == .howToPlay {
-                    Text("how_to_play.movement")
-                    Text("how_to_play.objective")
-                } else {
-                    Text("about.title")
-                        .font(GameStyle.displayFont)
-                    Text("about.description")
-                    Text("about.version")
-                        .foregroundStyle(.secondary)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    if page == .howToPlay {
+                        Text("how_to_play.movement.title")
+                            .font(GameStyle.displayFont)
+                            .accessibilityIdentifier("howToPlay.movement")
+                        Text("how_to_play.movement")
+                        Text("how_to_play.actions.title")
+                            .font(GameStyle.displayFont)
+                            .accessibilityIdentifier("howToPlay.actions")
+                        Text("how_to_play.actions")
+                        Text("how_to_play.food.title")
+                            .font(GameStyle.displayFont)
+                            .accessibilityIdentifier("howToPlay.food")
+                        Text("how_to_play.food")
+                        Text("how_to_play.goal.title")
+                            .font(GameStyle.displayFont)
+                            .accessibilityIdentifier("howToPlay.goal")
+                        Text("how_to_play.goal")
+                    } else {
+                        Text("about.title")
+                            .font(GameStyle.displayFont)
+                            .accessibilityIdentifier("about.title")
+                        Text("about.description")
+                        Text("about.version")
+                            .foregroundStyle(.secondary)
+                    }
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
             }
             .font(GameStyle.bodyFont)
-            .padding()
             .navigationTitle(Text(page.titleKey))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("common.done") { dismiss() }
+                        .accessibilityIdentifier("common.done")
                 }
             }
         }

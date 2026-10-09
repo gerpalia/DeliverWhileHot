@@ -8,7 +8,19 @@
 
 /* Begin PBXFileReference section */
 		C684BC1430642C4400948853 /* DeliverWhileHot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DeliverWhileHot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000011 /* GameRulesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliverWhileHotTests/GameRulesTests.swift; sourceTree = SOURCE_ROOT; };
+		A10000000000000000000012 /* MenuAndGameplayUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliverWhileHotUITests/MenuAndGameplayUITests.swift; sourceTree = SOURCE_ROOT; };
+		A10000000000000000000013 /* DeliverWhileHotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DeliverWhileHotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000014 /* DeliverWhileHotUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DeliverWhileHotUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000015 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/iPhoneSimulator.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000021 /* GameRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* GameRulesTests.swift */; };
+		A10000000000000000000022 /* MenuAndGameplayUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000012 /* MenuAndGameplayUITests.swift */; };
+		A10000000000000000000023 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* XCTest.framework */; };
+		A10000000000000000000024 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* XCTest.framework */; };
+/* End PBXBuildFile section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		C684C032306773C200948853 /* Exceptions for "DeliverWhileHot" folder in "DeliverWhileHot" target */ = {
@@ -41,11 +53,15 @@
 		};
 /* End PBXFrameworksBuildPhase section */
 
+		A10000000000000000000041 /* Unit Test Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000023 /* XCTest.framework in Frameworks */,); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000042 /* UI Test Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000024 /* XCTest.framework in Frameworks */,); runOnlyForDeploymentPostprocessing = 0; };
+
 /* Begin PBXGroup section */
 		C684BC0B30642C4400948853 = {
 			isa = PBXGroup;
 			children = (
 				C684BC1630642C4400948853 /* DeliverWhileHot */,
+				A10000000000000000000061 /* Tests */,
 				C684BC1530642C4400948853 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,8 +70,19 @@
 			isa = PBXGroup;
 			children = (
 				C684BC1430642C4400948853 /* DeliverWhileHot.app */,
+				A10000000000000000000013 /* DeliverWhileHotTests.xctest */,
+				A10000000000000000000014 /* DeliverWhileHotUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A10000000000000000000061 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				A10000000000000000000011 /* GameRulesTests.swift */,
+				A10000000000000000000012 /* MenuAndGameplayUITests.swift */,
+			);
+			name = Tests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -83,7 +110,47 @@
 			productReference = C684BC1430642C4400948853 /* DeliverWhileHot.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A10000000000000000000001 /* DeliverWhileHotTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000071 /* Build configuration list for PBXNativeTarget "DeliverWhileHotTests" */;
+			buildPhases = (
+				A10000000000000000000031 /* Sources */,
+				A10000000000000000000041 /* Frameworks */,
+				A10000000000000000000051 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = (A10000000000000000000092 /* Unit test app dependency */,);
+			name = DeliverWhileHotTests;
+			productName = DeliverWhileHotTests;
+			productReference = A10000000000000000000013 /* DeliverWhileHotTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A10000000000000000000002 /* DeliverWhileHotUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A10000000000000000000072 /* Build configuration list for PBXNativeTarget "DeliverWhileHotUITests" */;
+			buildPhases = (
+				A10000000000000000000032 /* Sources */,
+				A10000000000000000000042 /* Frameworks */,
+				A10000000000000000000052 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = (A10000000000000000000094 /* UI test app dependency */,);
+			name = DeliverWhileHotUITests;
+			productName = DeliverWhileHotUITests;
+			productReference = A10000000000000000000014 /* DeliverWhileHotUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXContainerItemProxy section */
+		A10000000000000000000091 /* Unit test app dependency proxy */ = {isa = PBXContainerItemProxy; containerPortal = C684BC0C30642C4400948853 /* Project object */; proxyType = 1; remoteGlobalIDString = C684BC1330642C4400948853; remoteInfo = DeliverWhileHot; };
+		A10000000000000000000093 /* UI test app dependency proxy */ = {isa = PBXContainerItemProxy; containerPortal = C684BC0C30642C4400948853 /* Project object */; proxyType = 1; remoteGlobalIDString = C684BC1330642C4400948853; remoteInfo = DeliverWhileHot; };
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		A10000000000000000000092 /* Unit test app dependency */ = {isa = PBXTargetDependency; target = C684BC1330642C4400948853 /* DeliverWhileHot */; targetProxy = A10000000000000000000091 /* Unit test app dependency proxy */; };
+		A10000000000000000000094 /* UI test app dependency */ = {isa = PBXTargetDependency; target = C684BC1330642C4400948853 /* DeliverWhileHot */; targetProxy = A10000000000000000000093 /* UI test app dependency proxy */; };
+/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		C684BC0C30642C4400948853 /* Project object */ = {
@@ -113,6 +180,8 @@
 			projectRoot = "";
 			targets = (
 				C684BC1330642C4400948853 /* DeliverWhileHot */,
+				A10000000000000000000001 /* DeliverWhileHotTests */,
+				A10000000000000000000002 /* DeliverWhileHotUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -136,6 +205,11 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+		A10000000000000000000031 /* Unit Test Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000021 /* GameRulesTests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000032 /* UI Test Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A10000000000000000000022 /* MenuAndGameplayUITests.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000051 /* Unit Test Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		A10000000000000000000052 /* UI Test Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 
 /* Begin XCBuildConfiguration section */
 		C684BC1D30642C4600948853 /* Debug */ = {
@@ -315,6 +389,10 @@
 			};
 			name = Release;
 		};
+		A10000000000000000000081 /* Unit Tests Debug */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = com.deliverwhilehot.app.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DeliverWhileHot.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DeliverWhileHot"; }; name = Debug; };
+		A10000000000000000000082 /* Unit Tests Release */ = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = com.deliverwhilehot.app.tests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DeliverWhileHot.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DeliverWhileHot"; }; name = Release; };
+		A10000000000000000000083 /* UI Tests Debug */ = {isa = XCBuildConfiguration; buildSettings = {GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = com.deliverwhilehot.app.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = DeliverWhileHot; }; name = Debug; };
+		A10000000000000000000084 /* UI Tests Release */ = {isa = XCBuildConfiguration; buildSettings = {GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = com.deliverwhilehot.app.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; TEST_TARGET_NAME = DeliverWhileHot; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -336,6 +414,8 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A10000000000000000000071 /* Build configuration list for PBXNativeTarget "DeliverWhileHotTests" */ = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000081 /* Unit Tests Debug */, A10000000000000000000082 /* Unit Tests Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		A10000000000000000000072 /* Build configuration list for PBXNativeTarget "DeliverWhileHotUITests" */ = {isa = XCConfigurationList; buildConfigurations = (A10000000000000000000083 /* UI Tests Debug */, A10000000000000000000084 /* UI Tests Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 /* End XCConfigurationList section */
 	};
 	rootObject = C684BC0C30642C4400948853 /* Project object */;

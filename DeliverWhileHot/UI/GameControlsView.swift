@@ -28,13 +28,15 @@ struct GameControlsView: View {
                                   isEnabled: canEat,
                                   action: onEat,
                                   imageName: "DeliverWhileHotEatingIcon",
-                                  cooldownProgress: eatCooldownProgress)
+                                  cooldownProgress: eatCooldownProgress,
+                                  identifier: "controls.eat")
                     CommandButton(title: "controls.block",
                                   symbol: "shield.fill",
                                   isEnabled: true,
                                   action: {},
                                   imageName: "DeliverWhileHotBlockIcon",
-                                  onPressChanged: onBlockChanged)
+                                  onPressChanged: onBlockChanged,
+                                  identifier: "controls.block")
                 }
                 HStack(spacing: 8) {
                     CommandButton(title: "controls.molotov",
@@ -42,8 +44,9 @@ struct GameControlsView: View {
                                   isEnabled: canThrowMolotov,
                                   action: onThrowMolotov,
                                   imageName: "DeliverWhileHotMolotovActionIcon",
-                                  cooldownProgress: molotovCooldownProgress)
-                    CommandButton(title: "controls.item", symbol: "backpack.fill", isEnabled: false, action: {})
+                                  cooldownProgress: molotovCooldownProgress,
+                                  identifier: "controls.molotov")
+                    CommandButton(title: "controls.item", symbol: "backpack.fill", isEnabled: false, action: {}, identifier: "controls.item")
                 }
             }
         }
@@ -96,6 +99,7 @@ private struct VirtualJoystick: View {
             )
             .accessibilityLabel("Virtual joystick")
             .accessibilityHint("Drag in any direction to move")
+            .accessibilityIdentifier("controls.joystick")
         }
         .frame(width: baseDiameter, height: baseDiameter)
     }
@@ -137,6 +141,7 @@ private struct CommandButton: View {
     var imageName: String? = nil
     var cooldownProgress: CGFloat = 1
     var onPressChanged: ((Bool) -> Void)? = nil
+    var identifier: String
     @State private var showReadyShimmer = false
 
     var body: some View {
@@ -180,6 +185,7 @@ private struct CommandButton: View {
         )
         .foregroundStyle(.white.opacity(isEnabled ? 1 : 0.35))
         .accessibilityLabel(title)
+        .accessibilityIdentifier(identifier)
         .disabled(!isEnabled)
         .onChange(of: cooldownProgress) { oldValue, newValue in
             guard oldValue < 0.999, newValue >= 0.999 else { return }

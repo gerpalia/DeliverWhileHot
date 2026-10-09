@@ -228,7 +228,32 @@ enum GameSpriteSheet {
         rows: 3,
         insetPixels: 2,
         artworkWidthFraction: 0.90,
-        artworkHeightFraction: 0.80
+        artworkHeightFraction: 0.80,
+        fixedArtworkHeightFraction: 0.78,
+        maximumArtworkWidthFraction: 0.78,
+        outputCanvasWidth: 352,
+        preserveSourceScale: false,
+        // These poses cross the nominal 256-pixel columns. Rectangles are measured
+        // from the top-left of the 1024 × 1536 source, then normalized for loading.
+        sourceRegions: [
+            5: CGRect(x: 244, y: 573, width: 244, height: 396),
+            6: CGRect(x: 484, y: 603, width: 260, height: 362),
+            7: CGRect(x: 754, y: 603, width: 268, height: 362),
+            8: CGRect(x: 10, y: 1026, width: 230, height: 460),
+            9: CGRect(x: 241, y: 990, width: 247, height: 470),
+            10: CGRect(x: 484, y: 1030, width: 260, height: 430),
+            11: CGRect(x: 754, y: 1030, width: 268, height: 430)
+        ].mapValues { CGRect(x: $0.minX / 1024, y: $0.minY / 1536,
+                             width: $0.width / 1024, height: $0.height / 1536) },
+        excludedRegions: [
+            7: [CGRect(x: 754, y: 603, width: 61, height: 152)],
+            10: [CGRect(x: 484, y: 1030, width: 18, height: 230),
+                 CGRect(x: 730, y: 1030, width: 14, height: 120)],
+            11: [CGRect(x: 754, y: 1030, width: 69, height: 200)]
+        ].mapValues { regions in
+            regions.map { CGRect(x: $0.minX / 1024, y: $0.minY / 1536,
+                                 width: $0.width / 1024, height: $0.height / 1536) }
+        }
     )
 
     /// Warm the CPU-side atlas normalization before the first encounter is spawned.
@@ -292,7 +317,13 @@ enum GameSpriteSheet {
                                      insetPixels: CGFloat,
                                      artworkWidthFraction: CGFloat,
                                      baselineFraction: CGFloat = 0.06,
-                                     artworkHeightFraction: CGFloat? = nil) -> [[SKTexture]] {
+                                     artworkHeightFraction: CGFloat? = nil,
+                                     fixedArtworkHeightFraction: CGFloat? = nil,
+                                     maximumArtworkWidthFraction: CGFloat? = nil,
+                                     outputCanvasWidth: CGFloat? = nil,
+                                     preserveSourceScale: Bool = false,
+                                     sourceRegions: [Int: CGRect] = [:],
+                                     excludedRegions: [Int: [CGRect]] = [:]) -> [[SKTexture]] {
         let atlas = SKTexture(imageNamed: imageName).cgImage()
         let pixelWidth = atlas.width
         let pixelHeight = atlas.height
@@ -318,19 +349,46 @@ enum GameSpriteSheet {
         let safeWidthFraction = min(max(artworkWidthFraction, 0.1), 0.96)
         let safeBaselineFraction = min(max(baselineFraction, 0), 0.2)
         let safeHeightFraction = artworkHeightFraction.map { min(max($0, 0.1), 0.96) }
+        let safeFixedArtworkHeightFraction = fixedArtworkHeightFraction.map {
+            min(max($0, 0.1), 0.96)
+        }
+        let safeMaximumArtworkWidthFraction = maximumArtworkWidthFraction.map {
+            min(max($0, 0.1), 0.96)
+        }
+        let imageRect = CGRect(x: 0, y: 0, width: pixelWidth, height: pixelHeight)
+        func pixelRect(_ normalized: CGRect) -> CGRect {
+            CGRect(x: normalized.minX * CGFloat(pixelWidth),
+                   y: normalized.minY * CGFloat(pixelHeight),
+                   width: normalized.width * CGFloat(pixelWidth),
+                   height: normalized.height * CGFloat(pixelHeight)).integral.intersection(imageRect)
+        }
+        let exclusionsByPose = excludedRegions.mapValues { $0.map(pixelRect) }
 
-        return (0..<rows).map { row in
-            (0..<columns).map { column in
-                let cellOriginX = column * cellWidth
-                let cellOriginY = row * cellHeight
+        // Measure visible pixels first. Most sheets use a shared source scale; the thief
+        // opts into a bounded visible size because its attack poses spread wider.
+        let bounds: [[CGRect?]] = (0..<rows).map { row in
+            (0..<columns).map { column -> CGRect? in
+                let region = sourceRegions[row * columns + column].map(pixelRect)
+                    ?? CGRect(x: column * cellWidth, y: row * cellHeight,
+                              width: cellWidth, height: cellHeight)
+                let cellOriginX = Int(region.minX)
+                let cellOriginY = Int(region.minY)
+                let scanWidth = Int(region.width)
+                let scanHeight = Int(region.height)
                 let inset = Int(insetPixels.rounded(.up))
-                var minX = cellWidth
-                var minY = cellHeight
+                var minX = scanWidth
+                var minY = scanHeight
                 var maxX = -1
                 var maxY = -1
 
-                for y in inset..<(cellHeight - inset) {
-                    for x in inset..<(cellWidth - inset) {
+                for y in inset..<(scanHeight - inset) {
+                    for x in inset..<(scanWidth - inset) {
+                        let sourcePoint = CGPoint(x: cellOriginX + x, y: cellOriginY + y)
+                        if exclusionsByPose[row * columns + column]?.contains(where: {
+                            $0.contains(sourcePoint)
+                        }) == true {
+                            continue
+                        }
                         let alphaIndex = (cellOriginY + y) * bytesPerRow +
                             (cellOriginX + x) * bytesPerPixel + 3
                         if pixels[alphaIndex] > 10 {
@@ -342,45 +400,50 @@ enum GameSpriteSheet {
                     }
                 }
 
-                guard maxX >= minX, maxY >= minY else {
-                    let emptyContext = CGContext(data: nil,
-                                                 width: cellWidth,
-                                                 height: cellHeight,
-                                                 bitsPerComponent: 8,
-                                                 bytesPerRow: 0,
-                                                 space: CGColorSpaceCreateDeviceRGB(),
-                                                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue |
-                                                    CGBitmapInfo.byteOrder32Big.rawValue)!
-                    let texture = SKTexture(cgImage: emptyContext.makeImage()!)
-                    texture.filteringMode = .linear
-                    return texture
-                }
+                guard maxX >= minX, maxY >= minY else { return nil }
+                return CGRect(x: cellOriginX + minX, y: cellOriginY + minY,
+                              width: maxX - minX + 1, height: maxY - minY + 1)
+            }
+        }
 
-                let cropRect = CGRect(x: cellOriginX + minX,
-                                      y: cellOriginY + minY,
-                                      width: maxX - minX + 1,
-                                      height: maxY - minY + 1)
-                guard let crop = atlas.cropping(to: cropRect) else {
-                    let emptyContext = CGContext(data: nil,
-                                                 width: cellWidth,
-                                                 height: cellHeight,
-                                                 bitsPerComponent: 8,
-                                                 bytesPerRow: 0,
-                                                 space: CGColorSpaceCreateDeviceRGB(),
-                                                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue |
-                                                    CGBitmapInfo.byteOrder32Big.rawValue)!
-                    return SKTexture(cgImage: emptyContext.makeImage()!)
-                }
+        let canvas = CGSize(width: outputCanvasWidth ?? CGFloat(cellWidth),
+                            height: CGFloat(cellHeight))
+        let targetWidth = canvas.width * safeWidthFraction
+        let maximumArtworkHeight = canvas.height * (safeHeightFraction ?? safeWidthFraction)
+        let tallestPose = bounds.flatMap { $0 }.compactMap { $0?.height }.max() ?? 1
+        let sharedScale = min(targetWidth / CGFloat(cellWidth), maximumArtworkHeight / tallestPose)
 
-                let canvas = CGSize(width: cellWidth, height: cellHeight)
-                let targetWidth = canvas.width * safeWidthFraction
-                // Keep the character's visible height consistent across poses. A single
-                // atlas-wide scale leaves smaller-drawn attack frames looking like they
-                // suddenly grow/shrink when their texture changes. Width remains capped so
-                // a wide reaching pose can extend naturally without enlarging the sprite.
-                let maximumArtworkHeight = canvas.height * (safeHeightFraction ?? safeWidthFraction)
+        return (0..<rows).map { row in
+            (0..<columns).map { column in
+                let colorSpace = CGColorSpaceCreateDeviceRGB()
+                let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue |
+                    CGBitmapInfo.byteOrder32Big.rawValue
+                let context = CGContext(data: nil,
+                                        width: Int(canvas.width),
+                                        height: Int(canvas.height),
+                                        bitsPerComponent: 8,
+                                        bytesPerRow: 0,
+                                        space: colorSpace,
+                                        bitmapInfo: bitmapInfo)!
+                context.clear(CGRect(origin: .zero, size: canvas))
+                guard let bounds = bounds[row][column],
+                      let crop = atlas.cropping(to: bounds) else {
+                    return SKTexture(cgImage: context.makeImage()!)
+                }
                 let scale: CGFloat
-                if safeHeightFraction != nil {
+                if preserveSourceScale {
+                    scale = sharedScale
+                } else if let safeFixedArtworkHeightFraction {
+                    // Match pose height, but cap width too: the attack art spreads its
+                    // arms farther than the idle art, which otherwise reads as a growth
+                    // spurt despite the sprite node itself keeping a fixed size.
+                    let heightScale = canvas.height * safeFixedArtworkHeightFraction /
+                        CGFloat(crop.height)
+                    let widthScale = safeMaximumArtworkWidthFraction.map {
+                        canvas.width * $0 / CGFloat(crop.width)
+                    } ?? .greatestFiniteMagnitude
+                    scale = min(heightScale, widthScale)
+                } else if safeHeightFraction != nil {
                     scale = min(targetWidth / CGFloat(crop.width),
                                 maximumArtworkHeight / CGFloat(crop.height))
                 } else {
@@ -389,22 +452,31 @@ enum GameSpriteSheet {
                 }
                 let renderedWidth = CGFloat(crop.width) * scale
                 let renderedHeight = CGFloat(crop.height) * scale
-                let destination = CGRect(x: (canvas.width - renderedWidth) / 2,
+                // Keep horizontal placement relative to the source cell. Centering each
+                // silhouette separately would slide the torso when an arm reaches out.
+                let destinationX = preserveSourceScale || safeFixedArtworkHeightFraction != nil
+                    ? (canvas.width - CGFloat(cellWidth) * scale) / 2
+                        + (bounds.minX - CGFloat(column * cellWidth)) * scale
+                    : (canvas.width - renderedWidth) / 2
+                let destination = CGRect(x: destinationX,
                                          y: canvas.height * safeBaselineFraction,
                                          width: renderedWidth,
                                          height: renderedHeight)
-                let colorSpace = CGColorSpaceCreateDeviceRGB()
-                let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue |
-                    CGBitmapInfo.byteOrder32Big.rawValue
-                let context = CGContext(data: nil,
-                                        width: cellWidth,
-                                        height: cellHeight,
-                                        bitsPerComponent: 8,
-                                        bytesPerRow: 0,
-                                        space: colorSpace,
-                                        bitmapInfo: bitmapInfo)!
-                context.clear(CGRect(origin: .zero, size: canvas))
                 context.interpolationQuality = .high
+                if let exclusions = excludedRegions[row * columns + column] {
+                    // Source rectangles count down from the top; CGContext counts up.
+                    let clip = CGMutablePath()
+                    clip.addRect(CGRect(origin: .zero, size: canvas))
+                    for excluded in exclusions.map(pixelRect) {
+                        let cutout = CGRect(x: destination.minX + (excluded.minX - bounds.minX) * scale,
+                                            y: destination.minY + (bounds.maxY - excluded.maxY) * scale,
+                                            width: excluded.width * scale,
+                                            height: excluded.height * scale)
+                        clip.addRect(cutout)
+                    }
+                    context.addPath(clip)
+                    context.clip(using: .evenOdd)
+                }
                 context.draw(crop, in: destination)
                 let texture = SKTexture(cgImage: context.makeImage()!)
                 texture.filteringMode = .linear

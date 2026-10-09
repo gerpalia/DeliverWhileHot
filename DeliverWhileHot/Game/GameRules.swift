@@ -41,7 +41,8 @@ struct GameRules {
     }
 
     static func applyPizzaStealBonus(_ state: inout GameState) {
-        state.foodRemaining = min(1.0, state.foodRemaining + pizzaStealFoodAmount)
+        state.foodRemaining = min(GameState.startingFoodRemaining,
+                                  state.foodRemaining + pizzaStealFoodAmount)
     }
 
     @discardableResult

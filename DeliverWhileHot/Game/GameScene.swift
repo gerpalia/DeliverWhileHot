@@ -50,6 +50,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var endingSequencePhase = EndingSequencePhase.inactive
     private var endingPromptStep: EndingPromptStep?
     private var endingPromptElapsed: TimeInterval = 0
+    private var endingPromptStartProgress: CGFloat = 0.5
     private var endingSetpiece: EndingSetpieceNode?
 
     func configure(for viewSize: CGSize,
@@ -713,7 +714,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let duration = endingSequencePhase == .jumpPrompt
             ? Self.jumpPromptDuration
             : Self.preparePromptDuration
-        return CGFloat((endingPromptElapsed / duration + 0.5).truncatingRemainder(dividingBy: 1))
+        return CGFloat((Double(endingPromptStartProgress) + endingPromptElapsed / duration)
+            .truncatingRemainder(dividingBy: 1))
     }
 
     private var endingWallDistanceAhead: CGFloat {
@@ -783,9 +785,14 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func showEndingPrompt(_ step: EndingPromptStep, phase: EndingSequencePhase) {
+        // Carry the marker's current angle into Jump. Resetting it to the initial
+        // half-turn made the indicator visibly reverse when Prepare was tapped near
+        // the end of its sweep.
+        let carriedProgress = endingPromptProgress
         endingSequencePhase = phase
         endingPromptStep = step
         endingPromptElapsed = 0
+        endingPromptStartProgress = step == .prepare ? 0.5 : carriedProgress
         onEndingPromptChanged?(step, endingPromptProgress)
     }
 

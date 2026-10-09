@@ -74,7 +74,7 @@ struct EndingPromptView: View {
         }
         .shadow(color: .black.opacity(0.55), radius: 24, y: 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .offset(y: 118)
+        .offset(y: 146)
         .background(Color.black.opacity(0.18).ignoresSafeArea())
     }
 
