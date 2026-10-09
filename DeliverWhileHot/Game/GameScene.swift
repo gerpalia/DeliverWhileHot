@@ -13,6 +13,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private static let preparePromptDuration: TimeInterval = 2.1
     private static let jumpPromptDuration: TimeInterval = 1.55
     private static let endingPromptWindow: CGFloat = 0.08
+    private static let jumpPromptTimeout: TimeInterval =
+        jumpPromptDuration * (1 + 2 * TimeInterval(endingPromptWindow))
 
     private let nodeFactory = GameNodeFactory()
     private let worldNode = SKNode()
@@ -714,8 +716,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         let duration = endingSequencePhase == .jumpPrompt
             ? Self.jumpPromptDuration
             : Self.preparePromptDuration
-        return CGFloat((Double(endingPromptStartProgress) + endingPromptElapsed / duration)
-            .truncatingRemainder(dividingBy: 1))
+        // Keep the displayed angle unwrapped so the marker moves forward through
+        // twelve o'clock instead of jumping from one turn back to zero.
+        return endingPromptStartProgress + CGFloat(endingPromptElapsed / duration)
     }
 
     private var endingWallDistanceAhead: CGFloat {
@@ -785,9 +788,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     private func showEndingPrompt(_ step: EndingPromptStep, phase: EndingSequencePhase) {
-        // Carry the marker's current angle into Jump. Resetting it to the initial
-        // half-turn made the indicator visibly reverse when Prepare was tapped near
-        // the end of its sweep.
+        // Carry the marker's unwrapped angle into Jump so the faster sweep starts
+        // exactly where Prepare finished.
         let carriedProgress = endingPromptProgress
         endingSequencePhase = phase
         endingPromptStep = step
@@ -800,10 +802,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         switch endingSequencePhase {
         case .preparePrompt, .jumpPrompt:
             endingPromptElapsed += deltaTime
-            let duration = endingSequencePhase == .jumpPrompt
-                ? Self.jumpPromptDuration
+            let timeout = endingSequencePhase == .jumpPrompt
+                ? Self.jumpPromptTimeout
                 : Self.preparePromptDuration
-            guard endingPromptElapsed < duration else {
+            guard endingPromptElapsed < timeout else {
                 beginFailedEnding()
                 return
             }
@@ -815,7 +817,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func submitEndingPromptTap() {
         guard endingSequencePhase == .preparePrompt || endingSequencePhase == .jumpPrompt else { return }
-        let progress = endingPromptProgress
+        let progress = endingPromptProgress.truncatingRemainder(dividingBy: 1)
         guard progress <= Self.endingPromptWindow || progress >= 1 - Self.endingPromptWindow else {
             beginFailedEnding()
             return
@@ -859,13 +861,23 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         let doorTarget = endingSetpiece.convert(endingSetpiece.doorTarget, to: self)
         let impactPoint = endingSetpiece.convert(endingSetpiece.scooterImpactPoint, to: self)
+        // Let the rider finish the doorway motion before the scooter reaches the wall.
+        // Starting both motions together made the explosion visually read as a rider
+        // crash even after the second timing prompt succeeded.
+        let riderEntry = SKAction.group([
+            .move(to: doorTarget, duration: 0.72),
+            .scale(to: 0.78, duration: 0.72)
+        ])
+        riderEntry.timingMode = .easeInEaseOut
         rider.run(.sequence([
-            .group([.move(to: doorTarget, duration: 0.92), .scale(to: 0.78, duration: 0.92)]),
-            .group([.scale(to: 0.18, duration: 0.16), .fadeOut(withDuration: 0.16)]),
+            riderEntry,
+            .group([.scale(to: 0.18, duration: 0.14), .fadeOut(withDuration: 0.14)]),
             .removeFromParent()
-        ]))
+        ]), withKey: "endingRiderEntry")
 
-        let scooterRide = SKAction.move(to: impactPoint, duration: 0.98)
+        // The scooter keeps moving while the rider dives inside. Its impact occurs
+        // only after the doorway animation has removed the rider.
+        let scooterRide = SKAction.move(to: impactPoint, duration: 1.15)
         scooterRide.timingMode = .easeIn
         scooter.run(.sequence([
             scooterRide,
