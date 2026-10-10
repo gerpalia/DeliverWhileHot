@@ -17,6 +17,13 @@ enum EndingPromptStep: Equatable {
         case .jump: String(localized: "ending.prompt.jump_hint")
         }
     }
+
+    var artworkName: String {
+        switch self {
+        case .prepare: "EndingPreparePrompt"
+        case .jump: "EndingJumpPrompt"
+        }
+    }
 }
 
 struct EndingPromptView: View {
@@ -43,14 +50,11 @@ struct EndingPromptView: View {
                         }
                         .frame(width: 118, height: 118)
                         .overlay {
-                            Text(step.title)
-                                .font(GameStyle.displayFont)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color(red: 0.96, green: 0.88, blue: 0.72))
-                                .multilineTextAlignment(.center)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.52)
-                                .padding(.horizontal, 9)
+                            Image(step.artworkName)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 112, height: 112)
+                                .clipShape(Circle())
                         }
                 }
                 .contentShape(Circle())

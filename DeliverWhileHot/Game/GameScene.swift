@@ -7,7 +7,7 @@ import SpriteKit
 
 final class GameScene: SKScene, SKPhysicsContactDelegate {
     private enum EndingSequencePhase: Equatable {
-        case inactive, approach, preparePrompt, jumpPrompt, successFlight, failedCrash, exploding
+        case inactive, approach, preparePrompt, preparing, jumpPrompt, successFlight, failedCrash, exploding
     }
 
     private static let preparePromptDuration: TimeInterval = 2.1
@@ -54,6 +54,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var endingPromptElapsed: TimeInterval = 0
     private var endingPromptStartProgress: CGFloat = 0.5
     private var endingSetpiece: EndingSetpieceNode?
+    private var endingPreparationNode: SKSpriteNode?
 
     func configure(for viewSize: CGSize,
                    onStateChanged: ((GameState) -> Void)? = nil,
@@ -766,6 +767,14 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         playerVelocity = .zero
         player.physicsBody = nil
         player.stopAnimations()
+        player.isHidden = true
+        let preparation = SKSpriteNode(texture: GameSpriteSheet.endingPreparationFrames[0])
+        preparation.name = "endingPreparationRider"
+        preparation.size = CGSize(width: 66, height: 132)
+        preparation.position = player.position
+        preparation.zPosition = 30
+        addChild(preparation)
+        endingPreparationNode = preparation
         worldNode.speed = 0
         encounterNodeLayer.speed = 0
         gameplayCamera.removeAction(forKey: "endingDoorFocus")
@@ -810,7 +819,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 return
             }
             onEndingPromptChanged?(endingPromptStep, endingPromptProgress)
-        case .inactive, .approach, .successFlight, .failedCrash, .exploding:
+        case .inactive, .approach, .preparing, .successFlight, .failedCrash, .exploding:
             break
         }
     }
@@ -825,13 +834,35 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         switch endingSequencePhase {
         case .preparePrompt:
-            player.playEndingPreparation()
-            showEndingPrompt(.jump, phase: .jumpPrompt)
+            playEndingPreparationSequence()
         case .jumpPrompt:
             beginSuccessfulEnding()
         default:
             break
         }
+    }
+
+    private func playEndingPreparationSequence() {
+        guard endingSequencePhase == .preparePrompt,
+              let preparation = endingPreparationNode else { return }
+        endingSequencePhase = .preparing
+        endingPromptStep = nil
+        onEndingPromptChanged?(nil, 0)
+        preparation.removeAllActions()
+        let frames = GameSpriteSheet.endingPreparationFrames
+        preparation.texture = frames[0]
+        preparation.size = CGSize(width: 66, height: 132)
+        preparation.run(.sequence([
+            .animate(with: frames,
+                     timePerFrame: 0.14,
+                     resize: false,
+                     restore: false),
+            .run { [weak self, weak preparation] in
+                preparation?.texture = frames[3]
+                preparation?.size = CGSize(width: 66, height: 132)
+                self?.showEndingPrompt(.jump, phase: .jumpPrompt)
+            }
+        ]), withKey: "endingPreparationAnimation")
     }
 
     private func beginSuccessfulEnding() {
@@ -841,6 +872,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         onEndingPromptChanged?(nil, 0)
         player.stopAnimations()
         player.isHidden = true
+        endingPreparationNode?.removeAllActions()
+        endingPreparationNode?.removeFromParent()
+        endingPreparationNode = nil
 
         // Hide the combined artwork first, then add its separated replacements in the same frame.
         let scooter = SKSpriteNode(imageNamed: "EndingUnmannedScooter")
@@ -850,11 +884,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         scooter.zPosition = 30
         addChild(scooter)
 
-        let rider = SKSpriteNode(imageNamed: "EndingRiderDive")
+        let jumpFrames = GameSpriteSheet.endingJumpFrames
+        let rider = SKSpriteNode(texture: jumpFrames[0])
         rider.name = "endingDivingRider"
-        // The temporary source art is a wide, oblique pose rather than the game's overhead
-        // angle; keeping it near the gameplay sprite's footprint limits that mismatch.
-        rider.size = CGSize(width: 72, height: 50)
+        rider.size = CGSize(width: 72, height: 132)
         rider.position = CGPoint(x: player.position.x + 5, y: player.position.y + 3)
         rider.zPosition = 31
         addChild(rider)
@@ -865,6 +898,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         // Starting both motions together made the explosion visually read as a rider
         // crash even after the second timing prompt succeeded.
         let riderEntry = SKAction.group([
+            .animate(with: jumpFrames,
+                     timePerFrame: 0.13,
+                     resize: false,
+                     restore: false),
             .move(to: doorTarget, duration: 0.72),
             .scale(to: 0.78, duration: 0.72)
         ])
@@ -896,6 +933,10 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         endingPromptStep = nil
         onEndingPromptChanged?(nil, 0)
         player.stopAnimations()
+        endingPreparationNode?.removeAllActions()
+        endingPreparationNode?.removeFromParent()
+        endingPreparationNode = nil
+        player.isHidden = false
         player.physicsBody = nil
 
         let impactPoint = endingSetpiece.convert(endingSetpiece.scooterImpactPoint, to: self)

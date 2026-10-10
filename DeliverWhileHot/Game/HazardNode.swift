@@ -214,6 +214,32 @@ final class HazardNode: SKNode {
 }
 
 enum GameSpriteSheet {
+    static let endingPreparationFrames = normalizedGridFrames(
+        imageName: "EndingPreparationAtlas",
+        columns: 4,
+        rows: 1,
+        insetPixels: 3,
+        artworkWidthFraction: 0.94,
+        artworkHeightFraction: 0.92,
+        fixedArtworkHeightFraction: 0.86,
+        maximumArtworkWidthFraction: 0.94,
+        outputCanvasWidth: 512,
+        preserveSourceScale: false
+    )[0]
+
+    static let endingJumpFrames = normalizedGridFrames(
+        imageName: "EndingJumpAtlas",
+        columns: 5,
+        rows: 1,
+        insetPixels: 3,
+        artworkWidthFraction: 0.94,
+        artworkHeightFraction: 0.92,
+        fixedArtworkHeightFraction: 0.86,
+        maximumArtworkWidthFraction: 0.94,
+        outputCanvasWidth: 512,
+        preserveSourceScale: false
+    )[0]
+
     static let catFrames = normalizedGridFrames(
         imageName: "DeliverWhileHotHazardCat",
         columns: 4,
@@ -260,6 +286,8 @@ enum GameSpriteSheet {
     static func prepareEncounterFrames() {
         _ = catFrames
         _ = thiefFrames
+        _ = endingPreparationFrames
+        _ = endingJumpFrames
     }
 
     /// Crops one row from a regular grid. rowIndex is counted from the image's top edge;
