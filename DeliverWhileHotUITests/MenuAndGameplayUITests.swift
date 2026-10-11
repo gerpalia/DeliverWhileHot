@@ -44,5 +44,10 @@ final class MenuAndGameplayUITests: XCTestCase {
 
         app.buttons["pause.resume"].tap()
         XCTAssertTrue(app.buttons["game.pause"].waitForExistence(timeout: 2))
+
+        app.buttons["game.pause"].tap()
+        app.buttons["pause.mainMenu"].tap()
+        app.buttons["pause.confirmLeave"].tap()
+        XCTAssertTrue(app.buttons["menu.newGame"].waitForExistence(timeout: 3))
     }
 }

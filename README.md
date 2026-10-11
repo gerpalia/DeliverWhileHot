@@ -101,3 +101,7 @@ The reporter sends only the event name, app version, OS version, and explicitly 
 ## Contributing
 
 Build with the `DeliverWhileHot` scheme, run its tests, and include a short simulator recording or screenshots for changes to gameplay visuals. Keep unrelated Xcode workspace state out of commits; the project’s local `xcuserdata` should not be treated as shared source.
+
+## License
+
+The source code is available under the MIT License in [`LICENSE`](LICENSE). That license does **not** cover artwork, images, animations, audio, fonts, videos, or other media included in the repository. Their rights and reuse permissions are separate; see [`AUDIO_LICENSES.md`](AUDIO_LICENSES.md) for the audio inventory. Public availability alone should not be treated as permission to redistribute media.
