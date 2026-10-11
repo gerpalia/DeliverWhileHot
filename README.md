@@ -2,6 +2,10 @@
 
 **Deliver While Hot** is a portrait arcade-game prototype about riding a scooter through a rough neighborhood to deliver food before it cools. It is a learning project and an in-progress playable demo—not a store-ready release.
 
+## Project status
+
+This repository is intended to be a presentable vertical-slice prototype. The main menu, playable road, hazards, food/heat systems, roadside environment, and two-step ending challenge are in place. Visual polish and balance are still being iterated, so simulator playthroughs remain part of the development process.
+
 ## Run it
 
 1. Install Xcode with an iOS Simulator runtime (iOS 17 or newer).
@@ -19,6 +23,18 @@ xcodebuild test \
 ```
 
 If that simulator model is not installed, choose an available iPhone under Xcode’s **Window → Devices and Simulators** and substitute its name in the command.
+
+For a beginner-friendly architecture and debugging overview, see [DeliverWhileHot-Coding-Guide.pdf](output/pdf/DeliverWhileHot-Coding-Guide.pdf).
+
+For a build-only check that does not need a signing team:
+
+```sh
+xcodebuild build \
+  -project DeliverWhileHot.xcodeproj \
+  -scheme DeliverWhileHot \
+  -destination 'generic/platform=iOS Simulator' \
+  CODE_SIGNING_ALLOWED=NO
+```
 
 ## How to play
 
@@ -53,6 +69,18 @@ SwiftUI draws menus and interface elements. SpriteKit draws and animates the scr
 
 These are a starting safety net, not complete gameplay coverage. Timing, collision geometry, sprite animation, difficulty, and the final sequence still need hands-on simulator testing.
 
+## Optional diagnostics
+
+`DiagnosticsReporter` is a small, dependency-free monitoring hook for prototype builds. It always writes structured events to the local OS log. Remote reporting is disabled by default and no service credentials are stored in the repository.
+
+To point a local run at a test collector, add this environment variable to the Xcode scheme’s Run action:
+
+```text
+DELIVER_WHILE_HOT_MONITORING_ENDPOINT=https://your-test-collector.example/events
+```
+
+The reporter sends only the event name, app version, OS version, and explicitly supplied string metadata. For a real public build, use a provider such as Sentry or Firebase Crashlytics after choosing an account, privacy policy, retention period, and data-processing terms. Do not enable a production endpoint until those decisions are documented.
+
 ## Known prototype limitations
 
 - This is a playable prototype, not a finished or balanced game. Steering feel, hazard spacing, difficulty, and run length still need hands-on testing.
@@ -61,6 +89,14 @@ These are a starting safety net, not complete gameplay coverage. Timing, collisi
 - The backpack/item action is a disabled placeholder. There is no save system, analytics, crash-reporting service, or remote monitoring configured.
 - Automated tests cover selected game rules and basic menu/game navigation, not the full SpriteKit experience. Hazard animation, collisions, steering feel, and the ending sequence require manual playtesting.
 - This repository contains development artwork and audio. Review `AUDIO_LICENSES.md` and verify redistribution rights and attribution for **all** art and sound before sharing the repository publicly. Some source URLs and license details are unresolved, so do not assume every asset is cleared for redistribution.
+
+## Before sharing a public snapshot
+
+- Run the build and test commands above on a clean checkout.
+- Include a short simulator recording or screenshots so the current prototype state is clear.
+- Confirm that every bundled image, sound, and font is permitted for redistribution; unresolved entries in `AUDIO_LICENSES.md` still need manual verification.
+- Keep `DerivedData`, `.build`, `xcuserdata`, and `*.xcuserstate` out of commits. They are machine-generated or user-specific and are ignored by this repository.
+- Replace the prototype bundle identifier with the eventual product identifier only when the project has a release owner and signing setup.
 
 ## Contributing
 

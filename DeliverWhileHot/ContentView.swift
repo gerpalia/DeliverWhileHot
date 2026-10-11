@@ -7,6 +7,8 @@ import SpriteKit
 import SwiftUI
 
 struct ContentView: View {
+    let onReturnToMenu: () -> Void
+
     @Environment(\.scenePhase) private var scenePhase
     @State private var scene = GameScene()
     @State private var gameState = GameState()
@@ -14,6 +16,7 @@ struct ContentView: View {
     @State private var endingSequenceStarted = false
     @State private var endingPromptStep: EndingPromptStep?
     @State private var endingPromptProgress: CGFloat = 0.5
+    @State private var isPaused = false
     @State private var sceneID = UUID()
     @StateObject private var stageMusic = BackgroundMusicPlayer()
 
@@ -46,11 +49,28 @@ struct ContentView: View {
                     }
                 }
 
+                if endReason == nil && !endingSequenceStarted {
+                    PauseHandleView(action: pauseGame)
+                        .padding(.top, geometry.safeAreaInsets.top + 154)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                        .zIndex(5)
+                }
+
                 if let endingPromptStep {
                     EndingPromptView(step: endingPromptStep,
                                      progress: endingPromptProgress,
                                      onTap: { scene.submitEndingPromptTap() })
                     .transition(.opacity)
+                }
+
+                if isPaused && endReason == nil && !endingSequenceStarted {
+                    PauseOverlayView(
+                        onClose: resumeGame,
+                        onResume: resumeGame,
+                        onReturnToMenu: leaveToMenu
+                    )
+                    .transition(.opacity)
+                    .zIndex(20)
                 }
 
                 if let endReason {
@@ -82,6 +102,7 @@ struct ContentView: View {
         endingSequenceStarted = false
         endingPromptStep = nil
         endingPromptProgress = 0.5
+        isPaused = false
         scene = GameScene()
         sceneID = UUID()
         scene.configure(for: size,
@@ -98,5 +119,22 @@ struct ContentView: View {
                             endingPromptStep = step
                             endingPromptProgress = progress
                         })
+    }
+
+    private func pauseGame() {
+        guard endReason == nil, !endingSequenceStarted, !isPaused else { return }
+        scene.pauseRun()
+        isPaused = true
+    }
+
+    private func resumeGame() {
+        scene.resumeRun()
+        isPaused = false
+    }
+
+    private func leaveToMenu() {
+        scene.resumeRun()
+        isPaused = false
+        onReturnToMenu()
     }
 }

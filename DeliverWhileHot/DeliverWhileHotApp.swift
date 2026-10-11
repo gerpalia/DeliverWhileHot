@@ -9,6 +9,10 @@ import SwiftUI
 
 @main
 struct DeliverWhileHotApp: App {
+    init() {
+        DiagnosticsReporter.shared.start()
+    }
+
     var body: some Scene {
         WindowGroup {
             StartView()

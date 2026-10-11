@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'DeliverWhileHot' in project 'DeliverWhileHot' (no dependencies)

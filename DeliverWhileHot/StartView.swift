@@ -14,7 +14,9 @@ struct StartView: View {
     var body: some View {
         Group {
             if isGameStarted {
-                ContentView()
+                ContentView {
+                    isGameStarted = false
+                }
             } else {
                 menuScreen
             }
@@ -132,22 +134,50 @@ private struct MenuInformationView: View {
                             .font(GameStyle.displayFont)
                             .accessibilityIdentifier("howToPlay.movement")
                         Text("how_to_play.movement")
-                        Text("how_to_play.actions.title")
-                            .font(GameStyle.displayFont)
-                            .accessibilityIdentifier("howToPlay.actions")
-                        Text("how_to_play.actions")
                         Text("how_to_play.food.title")
                             .font(GameStyle.displayFont)
                             .accessibilityIdentifier("howToPlay.food")
-                        Text("how_to_play.food")
+                        VStack(alignment: .leading, spacing: 10) {
+                            GuideInfoRow(icon: .symbol("heart.fill", .red),
+                                         description: "how_to_play.food.health",
+                                         accessibilityIdentifier: "howToPlay.food.health")
+                            GuideInfoRow(icon: .image("DeliverWhileHotPizzaSliceIcon"),
+                                         description: "how_to_play.food.pizza",
+                                         accessibilityIdentifier: "howToPlay.food.pizza")
+                            GuideInfoRow(icon: .image("DeliverWhileHotMolotovReady"),
+                                         description: "how_to_play.food.molotov",
+                                         accessibilityIdentifier: "howToPlay.food.molotov")
+                            GuideInfoRow(icon: .temperature,
+                                         description: "how_to_play.food.temperature",
+                                         accessibilityIdentifier: "howToPlay.food.temperature")
+                        }
+                        Text("how_to_play.actions.title")
+                            .font(GameStyle.displayFont)
+                            .accessibilityIdentifier("howToPlay.actions")
+                        VStack(alignment: .leading, spacing: 10) {
+                            ActionGuideRow(imageName: "DeliverWhileHotBlockIcon",
+                                           description: "how_to_play.action.block",
+                                           accessibilityIdentifier: "howToPlay.action.block")
+                            ActionGuideRow(imageName: "DeliverWhileHotEatingIcon",
+                                           description: "how_to_play.action.eat",
+                                           accessibilityIdentifier: "howToPlay.action.eat")
+                            ActionGuideRow(imageName: "DeliverWhileHotMolotovActionIcon",
+                                           description: "how_to_play.action.molotov",
+                                           accessibilityIdentifier: "howToPlay.action.molotov")
+                        }
                         Text("how_to_play.goal.title")
                             .font(GameStyle.displayFont)
                             .accessibilityIdentifier("howToPlay.goal")
                         Text("how_to_play.goal")
+                        VStack(alignment: .leading, spacing: 10) {
+                            ActionGuideRow(imageName: "EndingPreparePrompt",
+                                           description: "how_to_play.goal.prepare",
+                                           accessibilityIdentifier: "howToPlay.goal.prepare")
+                            ActionGuideRow(imageName: "EndingJumpPrompt",
+                                           description: "how_to_play.goal.jump",
+                                           accessibilityIdentifier: "howToPlay.goal.jump")
+                        }
                     } else {
-                        Text("about.title")
-                            .font(GameStyle.displayFont)
-                            .accessibilityIdentifier("about.title")
                         Text("about.description")
                         Text("about.version")
                             .foregroundStyle(.secondary)
@@ -157,14 +187,112 @@ private struct MenuInformationView: View {
                 .padding()
             }
             .font(GameStyle.bodyFont)
-            .navigationTitle(Text(page.titleKey))
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("common.done") { dismiss() }
-                        .accessibilityIdentifier("common.done")
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image("DeliverWhileHotCloseButton")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 38, height: 38)
+                            .contentShape(Circle())
+                    }
+                    .accessibilityIdentifier("common.done")
+                    .accessibilityLabel("Close")
                 }
             }
         }
         .tint(GameStyle.accent)
+    }
+}
+
+private struct ActionGuideRow: View {
+    let imageName: String
+    let description: LocalizedStringKey
+    let accessibilityIdentifier: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(imageName)
+                .resizable()
+                .scaledToFit()
+                .padding(5)
+                .frame(width: 56, height: 56)
+                .background(.black.opacity(0.72), in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(.white.opacity(0.45), lineWidth: 1)
+                }
+                .accessibilityHidden(true)
+
+            Text(description)
+                .font(GameStyle.secondaryFont)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(accessibilityIdentifier)
+    }
+}
+
+private struct GuideInfoRow: View {
+    enum Icon {
+        case image(String)
+        case symbol(String, Color)
+        case temperature
+    }
+
+    let icon: Icon
+    let description: LocalizedStringKey
+    let accessibilityIdentifier: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            iconView
+                .frame(width: 56, height: 56)
+                .accessibilityHidden(true)
+
+            Text(description)
+                .font(GameStyle.secondaryFont)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(accessibilityIdentifier)
+    }
+
+    @ViewBuilder
+    private var iconView: some View {
+        switch icon {
+        case let .image(name):
+            Image(name)
+                .resizable()
+                .scaledToFit()
+                .padding(5)
+                .background(.black.opacity(0.72), in: Circle())
+                .overlay { Circle().stroke(.white.opacity(0.45), lineWidth: 1) }
+        case let .symbol(name, color):
+            Image(systemName: name)
+                .font(.system(size: 27, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 56, height: 56)
+                .background(.black.opacity(0.72), in: Circle())
+                .overlay { Circle().stroke(.white.opacity(0.45), lineWidth: 1) }
+        case .temperature:
+            HStack(spacing: 2) {
+                Image(systemName: "snowflake")
+                    .foregroundStyle(Color(red: 0.72, green: 0.88, blue: 0.96))
+                Capsule()
+                    .fill(LinearGradient(colors: [.blue, .orange, .red], startPoint: .leading, endPoint: .trailing))
+                    .frame(width: 23, height: 8)
+                Image(systemName: "flame.fill")
+                    .foregroundStyle(Color.orange)
+            }
+            .font(.system(size: 12, weight: .bold))
+            .frame(width: 56, height: 56)
+            .background(.black.opacity(0.72), in: Capsule())
+            .overlay { Capsule().stroke(.white.opacity(0.45), lineWidth: 1) }
+        }
     }
 }

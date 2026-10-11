@@ -29,7 +29,9 @@ struct GameHUDView: View {
                     HStack(spacing: 5) {
                         ForEach(0..<4, id: \.self) { index in
                             let isAvailable = state.foodRemaining >= Double(index + 1) / 4
-                            PizzaSliceIcon()
+                            Image("DeliverWhileHotPizzaSliceIcon")
+                                .resizable()
+                                .scaledToFit()
                                 .frame(width: 19, height: 22)
                                 .opacity(isAvailable ? 1 : 0.20)
                         }
@@ -144,45 +146,4 @@ struct GameHUDView: View {
         }
     }
 
-    private struct PizzaSliceIcon: View {
-        var body: some View {
-            GeometryReader { geometry in
-                let size = geometry.size
-                ZStack {
-                    PizzaSliceShape()
-                        .fill(Color(red: 0.96, green: 0.65, blue: 0.25))
-                    PizzaSliceShape()
-                        .stroke(Color(red: 0.43, green: 0.22, blue: 0.12), lineWidth: 1.2)
-                    Circle()
-                        .fill(Color(red: 0.72, green: 0.18, blue: 0.12))
-                        .frame(width: size.width * 0.19, height: size.width * 0.19)
-                        .position(x: size.width * 0.38, y: size.height * 0.38)
-                    Circle()
-                        .fill(Color(red: 0.72, green: 0.18, blue: 0.12))
-                        .frame(width: size.width * 0.19, height: size.width * 0.19)
-                        .position(x: size.width * 0.63, y: size.height * 0.52)
-                    Circle()
-                        .fill(Color(red: 0.72, green: 0.18, blue: 0.12))
-                        .frame(width: size.width * 0.19, height: size.width * 0.19)
-                        .position(x: size.width * 0.49, y: size.height * 0.70)
-                }
-            }
-            .accessibilityHidden(true)
-        }
-    }
-
-    private struct PizzaSliceShape: Shape {
-        func path(in rect: CGRect) -> Path {
-            var path = Path()
-            path.move(to: CGPoint(x: rect.minX + rect.width * 0.10,
-                                  y: rect.minY + rect.height * 0.20))
-            path.addQuadCurve(to: CGPoint(x: rect.maxX - rect.width * 0.10,
-                                          y: rect.minY + rect.height * 0.20),
-                              control: CGPoint(x: rect.midX,
-                                               y: rect.minY - rect.height * 0.02))
-            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY - rect.height * 0.04))
-            path.closeSubpath()
-            return path
-        }
-    }
 }

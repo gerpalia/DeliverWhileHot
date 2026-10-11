@@ -1,5 +1,9 @@
 # Deliver While Hot Audio Sources
 
+## Verification note
+
+The source pages were found on public asset platforms, but “publicly available” is not the same as “public-domain” or automatically cleared for redistribution. The asset IDs and creator names below are useful audit clues; the exact source page, license version, attribution requirements, and download date still need to be recorded before publishing the bundled audio. Keeping the files in this portfolio prototype is separate from granting redistribution rights to third parties.
+
 The files under `DeliverWhileHot/Audio/Source/` are preserved copies of the original MP3 files. They are not modified or used as runtime assets. The files under `DeliverWhileHot/Audio/Processed/` are derived runtime candidates.
 
 Licensing is not verified by the filenames alone. Before distribution, record the original source URL, creator, license, attribution requirement, commercial-use permission, and download date for every source.

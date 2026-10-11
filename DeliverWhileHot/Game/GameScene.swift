@@ -13,6 +13,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private static let preparePromptDuration: TimeInterval = 2.1
     private static let jumpPromptDuration: TimeInterval = 1.55
     private static let endingPromptWindow: CGFloat = 0.08
+    private static let endingPreparationAdvanceSpeed: CGFloat = 44
     private static let jumpPromptTimeout: TimeInterval =
         jumpPromptDuration * (1 + 2 * TimeInterval(endingPromptWindow))
 
@@ -32,6 +33,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastCollisionTime: TimeInterval = -.infinity
     private var hasReachedDestination = false
     private var isConfigured = false
+    private(set) var isRunPaused = false
     private var elapsedStageTime: TimeInterval = 0
     private var freezeRemaining: TimeInterval = 0
     private var slowMotionRemaining: TimeInterval = 0
@@ -125,7 +127,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     override func update(_ currentTime: TimeInterval) {
-        guard isConfigured else { return }
+        guard isConfigured, !isRunPaused else { return }
         let deltaTime = min(currentTime - (lastUpdateTime ?? currentTime), 1.0 / 20.0)
         lastUpdateTime = currentTime
 
@@ -237,7 +239,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func setPlayerInput(horizontal: CGFloat, vertical: CGFloat) {
-        guard !hasReachedDestination, case .playing = gameState.phase else { return }
+        guard !isRunPaused, !hasReachedDestination, case .playing = gameState.phase else { return }
         horizontalInput = max(-1, min(1, horizontal))
         verticalInput = max(-1, min(1, vertical))
         let magnitude = hypot(horizontalInput, verticalInput)
@@ -263,7 +265,8 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func throwMolotov() {
         let currentTime = lastUpdateTime ?? 0
-        guard !hasReachedDestination,
+        guard !isRunPaused,
+              !hasReachedDestination,
               case .playing = gameState.phase,
               !player.isEating,
               !player.isThrowing,
@@ -292,7 +295,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func setBlocking(_ blocking: Bool) {
-        guard !hasReachedDestination, case .playing = gameState.phase else { return }
+        guard !isRunPaused, !hasReachedDestination, case .playing = gameState.phase else { return }
 
         if blocking {
             guard !player.isBlocking else { return }
@@ -308,7 +311,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var canThrowMolotov: Bool {
         let currentTime = lastUpdateTime ?? 0
-        guard case .playing = gameState.phase else { return false }
+        guard !isRunPaused, case .playing = gameState.phase else { return false }
         return !player.isEating &&
             !player.isThrowing &&
             molotovCount > 0 &&
@@ -321,7 +324,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var canEat: Bool {
         let currentTime = lastUpdateTime ?? 0
-        guard case .playing = gameState.phase else { return false }
+        guard !isRunPaused, case .playing = gameState.phase else { return false }
         return !player.isEating &&
             gameState.health < GameState.maximumHealth &&
             gameState.foodRemaining >= GameRules.foodCostPerMeal &&
@@ -699,6 +702,22 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         player.isEating
     }
 
+    func pauseRun() {
+        guard isConfigured,
+              !hasReachedDestination,
+              endingSequencePhase == .inactive,
+              case .playing = gameState.phase else { return }
+        isRunPaused = true
+        isPaused = true
+    }
+
+    func resumeRun() {
+        guard isRunPaused else { return }
+        isRunPaused = false
+        isPaused = false
+        lastUpdateTime = nil
+    }
+
     private func finish(with reason: GameEndReason) {
         guard case .playing = gameState.phase else { return }
         endingPromptStep = nil
@@ -849,6 +868,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         endingPromptStep = nil
         onEndingPromptChanged?(nil, 0)
         preparation.removeAllActions()
+        let slowAdvance = SKAction.repeatForever(
+            .moveBy(x: 0,
+                    y: Self.endingPreparationAdvanceSpeed,
+                    duration: 1.0)
+        )
+        preparation.run(slowAdvance, withKey: "endingPreparationAdvance")
         let frames = GameSpriteSheet.endingPreparationFrames
         preparation.texture = frames[0]
         preparation.size = CGSize(width: 66, height: 132)
