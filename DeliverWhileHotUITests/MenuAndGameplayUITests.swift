@@ -22,8 +22,18 @@ final class MenuAndGameplayUITests: XCTestCase {
         app.buttons["common.done"].tap()
 
         app.buttons["menu.newGame"].tap()
-        XCTAssertTrue(app.buttons["controls.block"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.otherElements["controls.joystick"].exists)
+        XCTAssertTrue(
+            app.buttons["game.pause"].waitForExistence(timeout: 15),
+            "Gameplay did not become ready after starting a new game."
+        )
+        XCTAssertTrue(
+            app.buttons["controls.block"].waitForExistence(timeout: 10),
+            "The Block control did not appear after gameplay became ready."
+        )
+        XCTAssertTrue(
+            app.otherElements["controls.joystick"].waitForExistence(timeout: 10),
+            "The steering joystick did not appear after gameplay became ready."
+        )
     }
 
     func testPauseResumeAndReturnConfirmation() {
