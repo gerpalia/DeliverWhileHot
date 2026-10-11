@@ -34,7 +34,8 @@ final class MenuAndGameplayUITests: XCTestCase {
         XCTAssertTrue(app.buttons["game.pause"].waitForExistence(timeout: 5))
 
         app.buttons["game.pause"].tap()
-        XCTAssertTrue(app.otherElements["pause.overlay"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["pause.resume"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["pause.mainMenu"].exists)
 
         app.buttons["pause.mainMenu"].tap()
         XCTAssertTrue(app.buttons["pause.cancel"].waitForExistence(timeout: 2))

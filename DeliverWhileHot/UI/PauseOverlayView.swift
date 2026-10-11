@@ -91,7 +91,6 @@ struct PauseOverlayView: View {
                 .shadow(color: .black.opacity(0.5), radius: 24, y: 12)
             }
         }
-        .accessibilityIdentifier("pause.overlay")
     }
 
     private func pauseButton(imageName: String,
