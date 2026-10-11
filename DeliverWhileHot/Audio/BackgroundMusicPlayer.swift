@@ -44,6 +44,8 @@ final class BackgroundMusicPlayer: NSObject, ObservableObject {
     }
 
     func stop() {
+        guard player != nil else { return }
+
         player?.stop()
         player = nil
         currentResourceName = nil

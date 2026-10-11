@@ -33,6 +33,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var lastCollisionTime: TimeInterval = -.infinity
     private var hasReachedDestination = false
     private var isConfigured = false
+    private var isReady = false
     private(set) var isRunPaused = false
     private var elapsedStageTime: TimeInterval = 0
     private var freezeRemaining: TimeInterval = 0
@@ -58,13 +59,53 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private var endingSetpiece: EndingSetpieceNode?
     private var endingPreparationNode: SKSpriteNode?
 
+    /// Loads and normalizes the art used by the first scene before the scene is
+    /// presented. Pixel scanning for the character atlases runs off the main thread;
+    /// SpriteKit then prepares the resulting textures asynchronously.
+    static func prepareResources(completion: @escaping () -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            GameSpriteSheet.prepareEncounterFrames()
+
+            let textureNames = [
+                "DeliverWhileHotRoadAsphaltTexture", "DeliverWhileHotSidewalkConcrete",
+                "DeliverWhileHotSidewalkDecals", "DeliverWhileHotPaintedWalls",
+                "DeliverWhileHotNeighborhoodProps", "DeliverWhileHotNeighborhoodResidents",
+                "DeliverWhileHotPuddleDecals", "DeliverWhileHotLeakingPipe",
+                "DeliverWhileHotRedSemaphore", "DeliverWhileHotChalkDecals",
+                "DeliverWhileHotPlayerDefault", "DeliverWhileHotPlayerBlock",
+                "DeliverWhileHotPlayerHit", "DeliverWhileHotPlayerBurning",
+                "DeliverWhileHotPlayerEating", "DeliverWhileHotPlayerMolotovThrow",
+                "DeliverWhileHotBlockIcon", "DeliverWhileHotEatingIcon",
+                "DeliverWhileHotMolotovActionIcon", "DeliverWhileHotMolotovReady",
+                "DeliverWhileHotMolotovEmpty", "DeliverWhileHotPizzaSliceIcon",
+                "DeliverWhileHotPizzaStealEvent",
+                "DeliverWhileHotHazardCat", "DeliverWhileHotHazardCow",
+                "DeliverWhileHotHazardPigeon", "DeliverWhileHotThiefAtlas",
+                "DeliverWhileHotMolotovProjectile", "DeliverWhileHotMolotovExplosion",
+                "DeliverWhileHotParryEffect", "DeliverWhileHotHealingEffect",
+                "DeliverWhileHotEndingArrow", "DeliverWhileHotEntranceReference",
+                "EndingPreparationAtlas", "EndingJumpAtlas", "EndingRiderDive",
+                "EndingUnmannedScooter"
+            ]
+            let textures = textureNames.map { SKTexture(imageNamed: $0) } +
+                GameSpriteSheet.catFrames +
+                GameSpriteSheet.thiefFrames.flatMap { $0 } +
+                GameSpriteSheet.endingPreparationFrames +
+                GameSpriteSheet.endingJumpFrames
+
+            SKTexture.preload(textures) {
+                DispatchQueue.main.async(execute: completion)
+            }
+        }
+    }
+
     func configure(for viewSize: CGSize,
                    onStateChanged: ((GameState) -> Void)? = nil,
                    onFinished: ((GameEndReason) -> Void)? = nil,
-                   onEndingPromptChanged: ((EndingPromptStep?, CGFloat) -> Void)? = nil) {
+                   onEndingPromptChanged: ((EndingPromptStep?, CGFloat) -> Void)? = nil,
+                   onReady: (() -> Void)? = nil) {
         guard !isConfigured, viewSize.width > 0, viewSize.height > 0 else { return }
         isConfigured = true
-        GameSpriteSheet.prepareEncounterFrames()
         self.onStateChanged = onStateChanged
         self.onFinished = onFinished
         self.onEndingPromptChanged = onEndingPromptChanged
@@ -103,31 +144,59 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                                        height: routeHeight).forEach(worldNode.addChild)
         let sectionHeight: CGFloat = 520
         let sectionCount = Int(ceil(routeHeight / sectionHeight))
-        for index in 0..<sectionCount {
+        nodeFactory.makeLaneMarkers(width: size.width, height: routeHeight).forEach(worldNode.addChild)
+        let completeConfiguration = { [weak self] in
+            guard let self, self.isConfigured else { return }
+            self.worldNode.addChild(self.nodeFactory.makeDestination(
+                width: self.size.width,
+                routeWidth: self.routeWidth,
+                height: self.routeHeight
+            ))
+            let rightRoadEdge = self.size.width / 2 + self.routeWidth / 2
+            self.worldNode.addChild(self.nodeFactory.makeBonus(
+                kind: .foodSteal,
+                position: CGPoint(x: rightRoadEdge - 10,
+                                  y: self.routeHeight - GameConstants.pizzaBonusDistanceBeforeDestination)
+            ))
+            self.player = self.nodeFactory.makePlayer()
+            self.player.position = CGPoint(x: self.size.width / 2, y: viewSize.height * 0.22)
+            self.player.zPosition = 20
+            self.addChild(self.player)
+            self.publishState()
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.isConfigured else { return }
+                self.isReady = true
+                onReady?()
+            }
+        }
+
+        func addStageSection(at index: Int) {
+            guard self.isConfigured else { return }
+            guard index < sectionCount else {
+                completeConfiguration()
+                return
+            }
+
             let section = StageSectionNode(index: index,
-                                           width: size.width,
-                                           routeWidth: routeWidth,
+                                           width: self.size.width,
+                                           routeWidth: self.routeWidth,
                                            sectionHeight: sectionHeight)
             section.position.y = CGFloat(index) * sectionHeight
-            worldNode.addChild(section)
+            self.worldNode.addChild(section)
+            // Yield between section builds so the loading ring can keep animating.
+            DispatchQueue.main.async {
+                addStageSection(at: index + 1)
+            }
         }
-        nodeFactory.makeLaneMarkers(width: size.width, height: routeHeight).forEach(worldNode.addChild)
-        worldNode.addChild(nodeFactory.makeDestination(width: size.width, routeWidth: routeWidth, height: routeHeight))
-        let rightRoadEdge = size.width / 2 + routeWidth / 2
-        worldNode.addChild(nodeFactory.makeBonus(
-            kind: .foodSteal,
-            position: CGPoint(x: rightRoadEdge - 10,
-                              y: routeHeight * 0.36)
-        ))
-        player = nodeFactory.makePlayer()
-        player.position = CGPoint(x: size.width / 2, y: viewSize.height * 0.22)
-        player.zPosition = 20
-        addChild(player)
-        publishState()
+
+        DispatchQueue.main.async {
+            addStageSection(at: 0)
+        }
     }
 
     override func update(_ currentTime: TimeInterval) {
-        guard isConfigured, !isRunPaused else { return }
+        guard isConfigured, isReady, !isRunPaused else { return }
         let deltaTime = min(currentTime - (lastUpdateTime ?? currentTime), 1.0 / 20.0)
         lastUpdateTime = currentTime
 
@@ -136,7 +205,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             return
         }
 
-        guard !hasReachedDestination, case .playing = gameState.phase else { return }
+        guard isReady, !hasReachedDestination, case .playing = gameState.phase else { return }
 
         if freezeRemaining > 0 {
             freezeRemaining = max(0, freezeRemaining - deltaTime)
@@ -234,12 +303,12 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func movePlayer(direction: CGFloat) {
-        guard !hasReachedDestination, case .playing = gameState.phase else { return }
+        guard isReady, !isRunPaused, !hasReachedDestination, case .playing = gameState.phase else { return }
         horizontalInput = direction
     }
 
     func setPlayerInput(horizontal: CGFloat, vertical: CGFloat) {
-        guard !isRunPaused, !hasReachedDestination, case .playing = gameState.phase else { return }
+        guard isReady, !isRunPaused, !hasReachedDestination, case .playing = gameState.phase else { return }
         horizontalInput = max(-1, min(1, horizontal))
         verticalInput = max(-1, min(1, vertical))
         let magnitude = hypot(horizontalInput, verticalInput)
@@ -251,21 +320,24 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func stopPlayerMovement() {
+        guard isReady else { return }
         horizontalInput = 0
     }
 
     func movePlayerVertically(direction: CGFloat) {
-        guard !hasReachedDestination, case .playing = gameState.phase else { return }
+        guard isReady, !hasReachedDestination, case .playing = gameState.phase else { return }
         verticalInput = direction
     }
 
     func stopPlayerVerticalMovement() {
+        guard isReady else { return }
         verticalInput = 0
     }
 
     func throwMolotov() {
         let currentTime = lastUpdateTime ?? 0
-        guard !isRunPaused,
+        guard isReady,
+              !isRunPaused,
               !hasReachedDestination,
               case .playing = gameState.phase,
               !player.isEating,
@@ -295,7 +367,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     func setBlocking(_ blocking: Bool) {
-        guard !isRunPaused, !hasReachedDestination, case .playing = gameState.phase else { return }
+        guard isReady, !isRunPaused, !hasReachedDestination, case .playing = gameState.phase else { return }
 
         if blocking {
             guard !player.isBlocking else { return }
@@ -311,7 +383,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var canThrowMolotov: Bool {
         let currentTime = lastUpdateTime ?? 0
-        guard !isRunPaused, case .playing = gameState.phase else { return false }
+        guard isReady, !isRunPaused, case .playing = gameState.phase else { return false }
         return !player.isEating &&
             !player.isThrowing &&
             molotovCount > 0 &&
@@ -324,7 +396,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     var canEat: Bool {
         let currentTime = lastUpdateTime ?? 0
-        guard !isRunPaused, case .playing = gameState.phase else { return false }
+        guard isReady, !isRunPaused, case .playing = gameState.phase else { return false }
         return !player.isEating &&
             gameState.health < GameState.maximumHealth &&
             gameState.foodRemaining >= GameRules.foodCostPerMeal &&
@@ -362,8 +434,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 verticalDistance <= playerHalfHeight + hazardHalfHeight
 
             if isOverlapping {
-                handleObstacleContact(at: time, hazardKind: hazard.definition.kind)
-                hazard.removeFromParent()
+                if handleObstacleContact(at: time, hazardKind: hazard.definition.kind) {
+                    hazard.removeFromParent()
+                }
                 break
             }
         }
@@ -389,8 +462,9 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
                 verticalDistance <= playerHalfHeight + 40
 
             if isOverlapping {
-                handleObstacleContact(at: time)
-                encounter.removeFromParent()
+                if handleObstacleContact(at: time) {
+                    encounter.removeFromParent()
+                }
             }
         }
 
@@ -553,15 +627,17 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         case parried
     }
 
+    @discardableResult
     private func handleObstacleContact(at time: TimeInterval,
                                       startsBurning: Bool = false,
-                                      hazardKind: HazardKind? = nil) {
+                                      hazardKind: HazardKind? = nil) -> Bool {
         if player.isBlocking {
-            handleBlockedHit(at: time)
-            return
+            let previousBlockImpactTime = lastBlockImpactTime
+            let result = handleBlockedHit(at: time)
+            return result == .parried || lastBlockImpactTime != previousBlockImpactTime
         }
 
-        guard time - lastCollisionTime >= GameConstants.hitInvincibilityDuration else { return }
+        guard time - lastCollisionTime >= GameConstants.hitInvincibilityDuration else { return false }
         lastCollisionTime = time
 
         if startsBurning {
@@ -576,6 +652,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
             finish(with: .healthDepleted)
         }
         publishState()
+        return true
     }
 
     @discardableResult
@@ -704,6 +781,7 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     func pauseRun() {
         guard isConfigured,
+              isReady,
               !hasReachedDestination,
               endingSequencePhase == .inactive,
               case .playing = gameState.phase else { return }
@@ -999,16 +1077,15 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
     private func updateEncounters(deltaTime: TimeInterval) {
         if !didSpawnThief, elapsedStageTime >= GameConstants.thiefSpawnTime {
             didSpawnThief = true
-            let thiefOnLeft = Bool.random()
+            // Keep the first showcase run reproducible: the thief enters from
+            // the right, opposite the Pidgeot's fixed left-side entry.
             let sideInset: CGFloat = 10
-            let thiefX = thiefOnLeft
-                ? size.width / 2 - routeWidth / 2 + sideInset
-                : size.width / 2 + routeWidth / 2 - sideInset
-            let entryStartX = thiefX - (thiefOnLeft ? CGFloat(1) : CGFloat(-1)) * 30
+            let thiefX = size.width / 2 + routeWidth / 2 - sideInset
+            let entryStartX = thiefX + 30
             let thief = EncounterNode(kind: .thief,
                                       position: CGPoint(x: thiefX,
                                                         y: size.height - GameConstants.topTouchExclusionHeight - 105),
-                                      horizontalDirection: thiefOnLeft ? 1 : -1,
+                                      horizontalDirection: -1,
                                       entryStartX: entryStartX,
                                       entryDuration: GameConstants.sideHazardEntryDuration)
             encounterNodeLayer.addChild(thief)
@@ -1018,11 +1095,13 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
         if !didSpawnPidgeot, elapsedStageTime >= GameConstants.pidgeotSpawnTime {
             didSpawnPidgeot = true
-            let direction: CGFloat = Bool.random() ? 1 : -1
-            let startX = direction > 0 ? -70 : size.width + 70
+            // Keep the first showcase encounter deterministic: it always enters from
+            // the left and crosses a readable band above the rider.
+            let direction: CGFloat = 1
+            let startX: CGFloat = -70
             let pidgeot = EncounterNode(kind: .pidgeot,
                                         position: CGPoint(x: startX,
-                                                          y: size.height - GameConstants.topTouchExclusionHeight - 105),
+                                                          y: player.position.y + 185),
                                         horizontalDirection: direction)
             encounterNodeLayer.addChild(pidgeot)
         }
@@ -1107,13 +1186,16 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
 
     private func updateWorldHazards(deltaTime: TimeInterval) {
         hazardSpawnTimer += deltaTime
-        if hazardSpawnTimer >= GameConstants.hazardSpawnInterval {
-            hazardSpawnTimer = 0
+        let spawnInterval = hazardSpawnInterval(for: elapsedStageTime)
+        if hazardSpawnTimer >= spawnInterval {
+            hazardSpawnTimer -= spawnInterval
 
             let definitions: [HazardDefinition] = [.cat, .cow]
             let definition = definitions[hazardSpawnIndex % definitions.count]
             let spawnY = size.height - GameConstants.topTouchExclusionHeight + 90 - worldNode.position.y
-            let hazardDirection: CGFloat = Bool.random() ? 1 : -1
+            // Fixed left/right alternation makes every run reproducible while still
+            // making both roadside entry directions part of the MVP.
+            let hazardDirection: CGFloat = hazardSpawnIndex.isMultiple(of: 2) ? 1 : -1
             let spawnX: CGFloat
             let hazardY: CGFloat
             if definition.kind == .cow {
@@ -1145,13 +1227,25 @@ final class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
 
+    private func hazardSpawnInterval(for stageTime: TimeInterval) -> TimeInterval {
+        if stageTime < GameConstants.pidgeotSpawnTime {
+            return GameConstants.earlyHazardSpawnInterval
+        }
+        if stageTime < GameConstants.thiefSpawnTime {
+            return GameConstants.midHazardSpawnInterval
+        }
+        return GameConstants.lateHazardSpawnInterval
+    }
+
     func didBegin(_ contact: SKPhysicsContact) {
         let categories = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
         let playerAndObstacle = GameConstants.playerPhysicsCategory | GameConstants.obstaclePhysicsCategory
         guard categories == playerAndObstacle else { return }
 
-        handleObstacleContact(at: lastUpdateTime ?? 0)
+        let didResolve = handleObstacleContact(at: lastUpdateTime ?? 0)
         let hazard = contact.bodyA.node as? HazardNode ?? contact.bodyB.node as? HazardNode
-        hazard?.removeFromParent()
+        if didResolve {
+            hazard?.removeFromParent()
+        }
     }
 }

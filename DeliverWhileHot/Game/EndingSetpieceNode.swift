@@ -17,7 +17,9 @@ final class EndingSetpieceNode: SKNode {
         let sideWidth = max(0, (sceneSize.width - roadWidth) / 2)
         let sidewalkWidth = min(sceneSize.width * GameConstants.sidewalkWidthRatio, sideWidth)
         let frontageWidth = max(1, sideWidth - sidewalkWidth)
-        let doorX = sceneSize.width - frontageWidth / 2
+        // Keep the entrance inside the frontage instead of centering it on the
+        // outermost edge, where the opening can be clipped on portrait screens.
+        let doorX = sceneSize.width - frontageWidth * 0.72
         let doorY = wallY - 158
         doorTarget = CGPoint(x: doorX, y: doorY)
         scooterImpactPoint = CGPoint(x: sceneSize.width / 2,
@@ -57,7 +59,8 @@ final class EndingSetpieceNode: SKNode {
         addOpenHouseEntrance(at: CGPoint(x: doorX, y: doorY),
                              frontageWidth: frontageWidth,
                              wallTexture: wallBand)
-        addArrow(at: CGPoint(x: doorX - frontageWidth * 0.32, y: doorY + 14))
+        addArrow(at: CGPoint(x: doorX - frontageWidth * 0.32, y: doorY + 14),
+                 frontageWidth: frontageWidth)
     }
 
     required init?(coder aDecoder: NSCoder) {
@@ -94,6 +97,24 @@ final class EndingSetpieceNode: SKNode {
         opening.zPosition = 4
         addChild(opening)
 
+        // The supplied image is a portrait reference containing the road,
+        // sidewalk, wall, and open entrance. Use only the frontage crop so it
+        // reads as part of the house rather than a second full-screen background.
+        let reference = SKTexture(imageNamed: "DeliverWhileHotEntranceReference")
+        let entranceCrop = SKTexture(rect: CGRect(x: 0.74,
+                                                   y: 0.18,
+                                                   width: 0.26,
+                                                   height: 0.52),
+                                      in: reference)
+        let entrance = SKSpriteNode(texture: entranceCrop)
+        let entranceWidth = max(frontageWidth * 0.96, 1)
+        entrance.size = CGSize(width: entranceWidth,
+                               height: entranceWidth * entranceCrop.size().height /
+                                   max(entranceCrop.size().width, 1))
+        entrance.position = position
+        entrance.zPosition = 5
+        addChild(entrance)
+
         // A faint amber pool falls from the doorway across the sidewalk toward the road.
         let lightSpill = SKShapeNode(ellipseOf: CGSize(width: 106, height: 142))
         lightSpill.position = CGPoint(x: position.x - 24, y: position.y - 62)
@@ -127,22 +148,13 @@ final class EndingSetpieceNode: SKNode {
         addChild(wall)
     }
 
-    private func addArrow(at position: CGPoint) {
-        let path = CGMutablePath()
-        path.move(to: CGPoint(x: -8, y: 0))
-        path.addLine(to: CGPoint(x: 8, y: 0))
-        path.move(to: CGPoint(x: 3, y: 5))
-        path.addLine(to: CGPoint(x: 8, y: 0))
-        path.addLine(to: CGPoint(x: 3, y: -5))
-
-        let arrow = SKShapeNode(path: path)
+    private func addArrow(at position: CGPoint, frontageWidth: CGFloat) {
+        let arrow = SKSpriteNode(imageNamed: "DeliverWhileHotEndingArrow")
         arrow.name = "endingDoorArrow"
         arrow.position = position
-        arrow.strokeColor = SKColor(red: 1, green: 0.62, blue: 0.25, alpha: 0.92)
-        arrow.lineWidth = 2.2
-        arrow.lineCap = .round
-        arrow.lineJoin = .round
-        arrow.glowWidth = 0.8
+        let arrowWidth = min(max(frontageWidth * 0.76, 24), 52)
+        arrow.size = CGSize(width: arrowWidth,
+                            height: arrowWidth * 1024 / 1536)
         arrow.zPosition = 7
         addChild(arrow)
         arrow.run(.repeatForever(.sequence([

@@ -16,6 +16,9 @@ final class MenuAndGameplayUITests: XCTestCase {
         XCTAssertTrue(about.exists)
         about.tap()
         XCTAssertTrue(app.staticTexts["about.description"].waitForExistence(timeout: 2))
+        app.buttons["about.credits"].tap()
+        XCTAssertTrue(app.staticTexts["about.creditsTitle"].waitForExistence(timeout: 2))
+        app.buttons["credits.close"].tap()
         app.buttons["common.done"].tap()
 
         app.buttons["menu.newGame"].tap()
@@ -39,7 +42,7 @@ final class MenuAndGameplayUITests: XCTestCase {
         app.buttons["pause.cancel"].tap()
         XCTAssertTrue(app.buttons["pause.resume"].waitForExistence(timeout: 2))
 
-        app.buttons["pause.close"].tap()
+        app.buttons["pause.resume"].tap()
         XCTAssertTrue(app.buttons["game.pause"].waitForExistence(timeout: 2))
     }
 }

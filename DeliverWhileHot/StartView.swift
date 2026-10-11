@@ -8,42 +8,56 @@ import SwiftUI
 struct StartView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var isGameStarted = false
+    @State private var isLaunchingGame = false
     @State private var presentedPage: MenuPage?
     @StateObject private var menuMusic = BackgroundMusicPlayer()
 
     var body: some View {
-        Group {
-            if isGameStarted {
-                ContentView {
-                    isGameStarted = false
+        ZStack {
+            Group {
+                if isGameStarted {
+                    ContentView(onReturnToMenu: {
+                        isGameStarted = false
+                    }, onReady: {
+                        menuMusic.stop()
+                        isLaunchingGame = false
+                    })
+                } else {
+                    menuScreen
                 }
-            } else {
-                menuScreen
+            }
+
+            if isLaunchingGame {
+                LoadingTransitionView()
+                    .transition(.opacity)
+                    .zIndex(100)
             }
         }
         .sheet(item: $presentedPage) { page in
             MenuInformationView(page: page)
         }
         .onAppear {
-            if !isGameStarted {
-                menuMusic.play(resourceName: "aliabbasabasov-epic-heavy-type-beat-rap-instrumental-prod5xbeatz-524490.mp3", volume: 0.32)
-            }
+            syncMenuMusic()
         }
         .onDisappear {
             menuMusic.stop()
         }
-        .onChange(of: scenePhase) { _, phase in
-            guard !isGameStarted else {
-                menuMusic.stop()
-                return
-            }
-
-            if phase == .active {
-                menuMusic.play(resourceName: "aliabbasabasov-epic-heavy-type-beat-rap-instrumental-prod5xbeatz-524490.mp3", volume: 0.32)
-            } else {
-                menuMusic.stop()
-            }
+        .onChange(of: scenePhase) { _, _ in
+            syncMenuMusic()
         }
+        .onChange(of: isGameStarted) { _, _ in
+            syncMenuMusic()
+        }
+    }
+
+    private func syncMenuMusic() {
+        guard !isGameStarted, scenePhase == .active else {
+            menuMusic.stop()
+            return
+        }
+
+        menuMusic.play(resourceName: "aliabbasabasov-epic-heavy-type-beat-rap-instrumental-prod5xbeatz-524490.mp3",
+                       volume: 0.32)
     }
 
     private var menuScreen: some View {
@@ -70,18 +84,24 @@ struct StartView: View {
                     Spacer()
 
                     Button {
-                        menuMusic.stop()
-                        isGameStarted = true
+                        isLaunchingGame = true
+                        // Give SwiftUI a run-loop to draw the loader before doing
+                        // any work associated with the first gameplay scene.
+                        DispatchQueue.main.async {
+                            GameScene.prepareResources {
+                                isGameStarted = true
+                            }
+                        }
                     } label: {
                         Text("menu.new_game")
                             .font(GameStyle.primaryButtonFont)
                             .fontWeight(.bold)
                     }
                     .buttonStyle(GameMenuButtonStyle(filled: true))
-                    .offset(y: 16)
+                    .offset(y: 22)
                     .accessibilityIdentifier("menu.newGame")
 
-                    HStack(spacing: 16) {
+                    HStack(spacing: 10) {
                         menuButton(titleKey: "menu.how_to_play", page: .howToPlay)
                         menuButton(titleKey: "menu.about", page: .about)
                     }
@@ -124,6 +144,7 @@ private enum MenuPage: String, Identifiable {
 private struct MenuInformationView: View {
     let page: MenuPage
     @Environment(\.dismiss) private var dismiss
+    @State private var showingCredits = false
 
     var body: some View {
         NavigationStack {
@@ -178,9 +199,7 @@ private struct MenuInformationView: View {
                                            accessibilityIdentifier: "howToPlay.goal.jump")
                         }
                     } else {
-                        Text("about.description")
-                        Text("about.version")
-                            .foregroundStyle(.secondary)
+                        AboutGameContent(showingCredits: $showingCredits)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -199,6 +218,126 @@ private struct MenuInformationView: View {
                             .contentShape(Circle())
                     }
                     .accessibilityIdentifier("common.done")
+                    .accessibilityLabel("Close")
+                }
+            }
+        }
+        .tint(GameStyle.accent)
+        .sheet(isPresented: $showingCredits) {
+            CreditsView()
+        }
+    }
+}
+
+private struct AboutGameContent: View {
+    @Binding var showingCredits: Bool
+
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        return version.map { "v\($0)" } ?? "v1.0"
+    }
+
+    var body: some View {
+        VStack(alignment: .center, spacing: 20) {
+            Image("DeliverWhileHotGameLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 226, height: 156)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(GameStyle.cream.opacity(0.7), lineWidth: 2)
+                }
+                .shadow(color: .black.opacity(0.35), radius: 8, y: 4)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 8) {
+                Text("about.tagline")
+                    .font(GameStyle.displayFont)
+                    .foregroundStyle(GameStyle.cream)
+                    .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("about.tagline")
+
+                Text("about.description")
+                    .font(GameStyle.bodyFont)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("about.description")
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("about.story")
+                    .font(GameStyle.secondaryFont)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("about.story")
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 2)
+
+            VStack(spacing: 5) {
+                Text("about.made_by")
+                    .font(GameStyle.secondaryFont)
+                    .foregroundStyle(.secondary)
+                    .tracking(2)
+                Text("Gerson da Cunha")
+                    .font(GameStyle.primaryButtonFont)
+                    .foregroundStyle(GameStyle.cream)
+                    .accessibilityIdentifier("about.author")
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 4)
+
+            Button {
+                showingCredits = true
+            } label: {
+                Text("about.credits_button")
+                    .font(GameStyle.secondaryButtonFont)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(GameMenuButtonStyle())
+            .accessibilityIdentifier("about.credits")
+
+            Text(appVersion)
+                .font(GameStyle.secondaryFont)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("about.version")
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+    }
+}
+
+private struct CreditsView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("about.credits_title")
+                        .font(GameStyle.displayFont)
+                        .accessibilityIdentifier("about.creditsTitle")
+                    Text("about.credits_body")
+                        .font(GameStyle.bodyFont)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("about.creditsBody")
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+            }
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image("DeliverWhileHotCloseButton")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 38, height: 38)
+                    }
+                    .accessibilityIdentifier("credits.close")
                     .accessibilityLabel("Close")
                 }
             }

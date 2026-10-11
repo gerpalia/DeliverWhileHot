@@ -25,13 +25,12 @@ struct GameMenuButtonStyle: ButtonStyle {
             .lineLimit(1)
             .minimumScaleFactor(0.72)
             .frame(maxWidth: .infinity)
-            .frame(height: filled ? 104 : 68)
+            .frame(height: filled ? 104 : 78)
             .background {
                 GeometryReader { geometry in
                     if filled {
                         Image("DeliverWhileHotMenuButtonPrimary")
                             .resizable()
-                            .scaledToFit()
                             .frame(width: geometry.size.width, height: geometry.size.height)
                             .accessibilityHidden(true)
                     } else {

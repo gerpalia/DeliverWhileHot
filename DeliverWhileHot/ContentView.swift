@@ -8,6 +8,7 @@ import SwiftUI
 
 struct ContentView: View {
     let onReturnToMenu: () -> Void
+    let onReady: () -> Void
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var scene = GameScene()
@@ -17,6 +18,7 @@ struct ContentView: View {
     @State private var endingPromptStep: EndingPromptStep?
     @State private var endingPromptProgress: CGFloat = 0.5
     @State private var isPaused = false
+    @State private var isSceneReady = false
     @State private var sceneID = UUID()
     @StateObject private var stageMusic = BackgroundMusicPlayer()
 
@@ -50,10 +52,12 @@ struct ContentView: View {
                 }
 
                 if endReason == nil && !endingSequenceStarted {
-                    PauseHandleView(action: pauseGame)
-                        .padding(.top, geometry.safeAreaInsets.top + 154)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                        .zIndex(5)
+                    if !isPaused {
+                        PauseHandleView(action: pauseGame)
+                            .padding(.top, geometry.safeAreaInsets.top + 154)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                            .zIndex(5)
+                    }
                 }
 
                 if let endingPromptStep {
@@ -65,7 +69,6 @@ struct ContentView: View {
 
                 if isPaused && endReason == nil && !endingSequenceStarted {
                     PauseOverlayView(
-                        onClose: resumeGame,
                         onResume: resumeGame,
                         onReturnToMenu: leaveToMenu
                     )
@@ -80,14 +83,13 @@ struct ContentView: View {
                 }
             }
             .onAppear {
-                stageMusic.play(resourceName: "kulakovka-epic-beat-278463.mp3", volume: 0.22)
                 startGame(in: geometry.size)
             }
             .onDisappear {
                 stageMusic.stop()
             }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active {
+                if phase == .active && isSceneReady {
                     stageMusic.play(resourceName: "kulakovka-epic-beat-278463.mp3", volume: 0.22)
                 } else {
                     stageMusic.stop()
@@ -103,6 +105,7 @@ struct ContentView: View {
         endingPromptStep = nil
         endingPromptProgress = 0.5
         isPaused = false
+        isSceneReady = false
         scene = GameScene()
         sceneID = UUID()
         scene.configure(for: size,
@@ -118,6 +121,13 @@ struct ContentView: View {
                             }
                             endingPromptStep = step
                             endingPromptProgress = progress
+                        },
+                        onReady: {
+                            isSceneReady = true
+                            onReady()
+                            if scenePhase == .active {
+                                stageMusic.play(resourceName: "kulakovka-epic-beat-278463.mp3", volume: 0.22)
+                            }
                         })
     }
 
@@ -135,6 +145,7 @@ struct ContentView: View {
     private func leaveToMenu() {
         scene.resumeRun()
         isPaused = false
+        stageMusic.stop()
         onReturnToMenu()
     }
 }

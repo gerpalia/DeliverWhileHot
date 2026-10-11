@@ -9,7 +9,8 @@ enum GameConstants {
     static let playerPhysicsCategory: UInt32 = 1 << 0
     static let obstaclePhysicsCategory: UInt32 = 1 << 1
 
-    static let targetStageDuration: TimeInterval = 24
+    // A deterministic thirty-second route gives each planned encounter room to read.
+    static let targetStageDuration: TimeInterval = 30
     static let minimumRouteHeight: CGFloat = 3_600
     static let routeWidthRatio: CGFloat = 0.60
     static let sidewalkWidthRatio: CGFloat = 0.10
@@ -49,13 +50,15 @@ enum GameConstants {
     static let thiefKnifeSpeed: CGFloat = 360
     static let thiefMolotovSpeed: CGFloat = 260
     static let sideHazardEntryDuration: TimeInterval = 1.15
-    static let pidgeotSpawnTime: TimeInterval = 9
+    static let pidgeotSpawnTime: TimeInterval = 7.5
     static let projectileSpeed: CGFloat = 280
     static let projectileInterval: TimeInterval = 1.1
     static let pidgeotSpeed: CGFloat = 110
-    static let pidgeotVerticalSpeed: CGFloat = 8
+    static let pidgeotVerticalSpeed: CGFloat = 0
     static let pidgeotProjectileInterval: TimeInterval = 0.55
-    static let hazardSpawnInterval: TimeInterval = 1.8
+    static let earlyHazardSpawnInterval: TimeInterval = 2.4
+    static let midHazardSpawnInterval: TimeInterval = 2.1
+    static let lateHazardSpawnInterval: TimeInterval = 1.8
     static let hitSoundName = "player_scream_extended.wav"
     static let bonusPickupSoundName = "bonus_pickup.wav"
     static let healthRecoverySoundName = "health_recovery.caf"
@@ -73,6 +76,7 @@ enum GameConstants {
     static let destinationTopInset: CGFloat = 140
     static let endingApproachDistance: CGFloat = 700
     static let endingPromptDistance: CGFloat = 350
+    static let pizzaBonusDistanceBeforeDestination: CGFloat = 1_300
 
     static let routeColor = SKColor(red: 0.10, green: 0.12, blue: 0.18, alpha: 1)
     static let roadColor = SKColor(red: 0.22, green: 0.24, blue: 0.30, alpha: 1)

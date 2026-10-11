@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "DeliverWhileHot-Pause-Panel.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
